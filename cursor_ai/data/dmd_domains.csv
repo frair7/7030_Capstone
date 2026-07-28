@@ -1,0 +1,6 @@
+domain_id,domain_name,protein_start_aa,protein_end_aa,cds_start_bp,cds_end_bp,display_fill_hex,display_border_hex,notes,source,source_version,date_accessed
+ABD,Actin-binding domain,1,246,1,738,,,N-terminal actin-binding / CH domain region,UniProt P11532,NP_003997.2,2026-07-28
+ROD,Central rod domain,247,3040,739,9120,,,Spectrin-repeat rod region (broad; repeats not split),UniProt P11532,NP_003997.2,2026-07-28
+HINGE,Hinge regions,541,2503,1621,7509,,,"Broad hinge span covering hinge 1 (541-611), hinge 2 (2134-2193), hinge 3 (2444-2503); overlaps rod domain",UniProt P11532,NP_003997.2,2026-07-28
+CR,Cysteine-rich domain,3081,3360,9241,10080,#DAE9F8,#4D93D9,Cysteine-rich / WW-binding region,UniProt P11532,NP_003997.2,2026-07-28
+CT,Carboxy-terminal domain,3361,3685,10081,11055,,,C-terminal region preceding stop codon,UniProt P11532,NP_003997.2,2026-07-28
