@@ -6,8 +6,6 @@ Interactive Streamlit tool for mapping mutations in the human *DMD* gene relativ
 
 > **Not for clinical use.** Frame-restoration candidates are theoretical calculations only.
 
-![Screenshot placeholder](docs/screenshot_placeholder.png)
-
 ## Reference transcript
 
 | Field | Value |
@@ -22,32 +20,30 @@ Interactive Streamlit tool for mapping mutations in the human *DMD* gene relativ
 | Coding exons | 79 |
 | Protein length | 3,685 aa |
 
-## Repository layout (this subfolder)
+## Repository layout
 
 ```text
 cursor_ai/
-├── app.py                  # Streamlit entry point
-├── environment.yml         # Conda environment (adds web-app packages)
-├── requirements.txt        # Pip-style direct dependencies
+├── app.py                      # Streamlit entry point
+├── ai_prompt.md                # AI session handoff (full project context)
+├── environment.yml             # Conda environment
+├── requirements.txt
 ├── README.md
 ├── DEMO.md
+├── AI_USE.md
 ├── LICENSE
-├── .gitignore
 ├── .streamlit/config.toml
-├── data/                   # Reference tables (Phase 2)
-├── src/                    # Application logic
-├── pages/                  # Streamlit multi-page modules (Phase 5)
-├── scripts/                # Data validation & utilities
-└── tests/                  # pytest suite (Phase 3+)
+├── data/                       # Reference tables + mutation catalog
+├── src/                        # Application logic
+├── pages/                      # Streamlit multi-page modules
+├── scripts/                    # Reference figure + data utilities
+├── tests/                      # pytest suite (82 tests)
+└── outputs/                    # Generated previews (gitignored content)
 ```
 
-Parent repository (`7030_Capstone/`) contains earlier batch scripts and mutation tables under `data/input/` and `scripts/`.
+Parent repository (`7030_Capstone/`) contains earlier batch scripts under `data/input/`.
 
 ## Environment setup
-
-The shared Conda environment **`7030_capstone`** already exists on this system. It currently includes Python 3.10, pandas, numpy, Jupyter, R, and scikit-learn, but **not yet** Streamlit or Plotly.
-
-**Do not use `--prune`** when updating — the environment is shared with prior coursework (R, JupyterLab, etc.) and pruning would remove those packages.
 
 ```bash
 module load miniconda3/24.1.2-py310
@@ -55,69 +51,69 @@ conda activate 7030_capstone
 conda env update --name 7030_capstone --file cursor_ai/environment.yml
 ```
 
+> **Do not use `--prune`** — the environment is shared with prior coursework.
+
 Verify:
 
 ```bash
 python -c "import streamlit, plotly, Bio; print('OK')"
 ```
 
-## Running locally
+## Running the app
 
-From the `cursor_ai/` directory:
-
-```bash
-cd cursor_ai
-python -m streamlit run app.py
-```
-
-Browser: `http://localhost:8501`
-
-## Running on OSC (remote Linux server)
-
-On the server:
+From `cursor_ai/`:
 
 ```bash
-cd cursor_ai
-python -m streamlit run app.py \
-  --server.address 0.0.0.0 \
-  --server.port 8501 \
-  --server.headless true
+export MPLCONFIGDIR=~/7030_Capstone/cursor_ai/.mplconfig
+python -m streamlit run app.py --server.port 8503 --server.headless true
 ```
 
-From your laptop, open an SSH tunnel (replace placeholders):
+**OSC + laptop tunnel:**
 
 ```bash
-ssh -N -L 8501:localhost:8501 USERNAME@SERVER_HOSTNAME
+ssh -N -L 8503:localhost:8503 frair7@ascend.osc.edu
 ```
 
-Then browse to `http://localhost:8501`.
+Open **http://localhost:8503/Mutation_Explorer**
 
-> Exact OSC login node, compute node, and port-forwarding steps depend on your account and job type. Consult OSC documentation for your cluster.
+Select catalog rows and click **Plot selected on map** to show patient deletion bars.
+
+## Mutation Explorer map (highlights)
+
+- **Transcript row:** puzzle-piece exons with domain colors aligned to coding position; per-segment border hues
+- **Domain row:** rounded protein bubbles with matching fill/border x-coordinates
+- **Hinge guides:** 8 dashed vertical lines (start + end of H1–H4)
+- **Left panel:** Group, Participant, MW, %Dys(WB) left of the track boundary
+- **Data source:** `scripts/reference_make_figure.py` (`EXON_TABLE`, `DOMAIN_MAP`)
+
+Interactive SVG: `src/mutation_map_svg.py` · Static PNG: `src/mutation_map_figure.py`
 
 ## Development status
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| 1 | Structure, environment, minimal app | **Current** |
-| 2 | Authoritative exon reference data | Pending |
-| 3 | Parsing, frame analysis, skip search | **Complete** |
-| 4 | Plotly visualization | **Complete** |
-| 5 | Full Streamlit UI | **Complete** |
-| 6 | Tests, validation, documentation | Pending |
+| 1 | Structure, environment, minimal app | Complete |
+| 2 | Authoritative exon reference data | Complete |
+| 3 | Parsing, frame analysis, skip search | Complete |
+| 4 | Plotly visualization | Complete |
+| 5 | Full Streamlit UI + cohort map | Complete |
+| 6 | Tests, validation, documentation | In progress |
 
-## Testing (Phase 3+)
+## Testing
 
 ```bash
 cd cursor_ai
-pytest -q
+export MPLCONFIGDIR=.mplconfig
+PYTHONPATH=. pytest -q
 ```
 
 ## Data provenance
 
-Reference exon coordinates will be retrieved from NCBI/Ensembl in Phase 2 — not manually guessed. Existing parent-repo files:
+- Exon coordinates: Ensembl ENST00000357033.9 → `data/dmd_exons_grch38.csv`
+- Cohort map styling: `scripts/reference_make_figure.py` (user-verified fractional domain splits)
+- Mutation catalog: `data/mutation_catalog.csv`
 
-- `../data/input/DMD_Mutations_clean.csv`
-- `../data/input/DMD_light.csv`
+See [data/README.md](data/README.md) for details.
 
 ## AI use statement
 

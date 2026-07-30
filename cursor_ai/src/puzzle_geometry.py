@@ -308,7 +308,8 @@ def build_exon_stroke_path(
             right_edge_path(x1, y_top, y_bottom, three_prime_shape, bump_depth)
         )
     else:
-        parts.append(f"L {x1:.3f} {y_bottom:.3f}")
+        # Junction path owns this edge — move without drawing a flat vertical line.
+        parts.append(f"M {x1:.3f} {y_bottom:.3f}")
 
     parts.append(f"L {x0:.3f} {y_bottom:.3f}")
 
@@ -317,7 +318,7 @@ def build_exon_stroke_path(
             left_edge_path(x0, y_top, y_bottom, five_prime_shape, bump_depth)
         )
     else:
-        parts.append(f"L {x0:.3f} {y_top:.3f}")
+        parts.append(f"M {x0:.3f} {y_top:.3f}")
 
     return " ".join(parts)
 

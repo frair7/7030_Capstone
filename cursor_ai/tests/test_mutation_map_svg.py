@@ -37,6 +37,9 @@ def test_interactive_map_html_builds() -> None:
         }
     ]
     html = build_interactive_map_html(rows)
-    assert "clipPath" in html
-    assert "clip-e8" in html
     assert "data-tip" in html
+    assert 'fill="#FFCCCC"' in html
+    assert 'stroke="#EB6F6F"' in html
+    assert "clip-e8" in html
+    assert html.count('class="hinge-guide"') == 8
+    assert html.rindex('class="hinge-guide"') > html.rindex("</text>")

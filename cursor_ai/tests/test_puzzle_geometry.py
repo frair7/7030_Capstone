@@ -7,8 +7,8 @@ import re
 import pytest
 
 from src.puzzle_geometry import (
-    EdgeShape,
     build_exon_path,
+    build_exon_stroke_path,
     calculate_bump_depth,
     left_edge_path,
     normalize_edge_shape,
@@ -112,5 +112,19 @@ def test_build_exon_path_closed_without_diagonal(
             assert near_right or near_left or near_protrusion, (
                 f"diagonal across body: {(xa, ya)} -> {(xb, yb)}"
             )
-        assert X0 - 0.01 <= xa <= X1 + DEPTH + 0.01
+            assert X0 - 0.01 <= xa <= X1 + DEPTH + 0.01
         assert Y_TOP - 0.01 <= ya <= y_bottom + 0.01
+
+
+def test_build_exon_stroke_path_skips_junction_edges() -> None:
+    """Interior exons must not draw flat vertical lines on shared junction edges."""
+    path = build_exon_stroke_path(
+        X0, X1, Y_TOP, HEIGHT,
+        "Point", "Point", DEPTH,
+        stroke_left=False,
+        stroke_right=False,
+    )
+    assert f"L {X1:.3f} {Y_TOP + HEIGHT:.3f}" not in path
+    assert f"L {X0:.3f} {Y_TOP:.3f}" not in path
+    assert f"M {X1:.3f} {Y_TOP + HEIGHT:.3f}" in path
+    assert f"M {X0:.3f} {Y_TOP:.3f}" in path

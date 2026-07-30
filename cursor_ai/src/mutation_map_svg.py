@@ -1,8 +1,8 @@
 """
 Interactive SVG cohort mutation map for Streamlit (GeneCards-style hover).
 
-Transcript row: interlocking puzzle-piece exons with domain-aligned gradients.
-Domain row: independent rounded bubbles (one color per domain segment).
+Transcript row: continuous domain colour band with puzzle-piece outlines on top.
+Domain row: rounded bubbles with segment-aligned fills and borders (same x-coords).
 """
 
 from __future__ import annotations
@@ -27,20 +27,47 @@ from src.dp427m_exon_data import (
 )
 from src.exon_display_config import pct_dys_color
 from src.mutation_viz import exon_range_from_row
-from src.part_segments import part_rects_for_exon
+from src.part_segments import (
+    PartSegment,
+    build_part_segments,
+    exon_draw_xrange,
+    part_border_color,
+    segments_for_exon,
+    segments_in_xrange,
+)
 from src.puzzle_geometry import (
     build_exon_path,
     build_exon_stroke_path,
     build_junction_path,
     calculate_bump_depth,
+    domain_bubble_svg_d,
 )
 
 # Layout constants (pixels)
-LEFT = 148
+# Left metadata panel ends at TABLE_RIGHT; transcript/protein track begins at TRACK_LEFT.
+_REF_GROUP, _REF_PART, _REF_MW, _REF_PCT = 0.9, 2.2, 1.4, 1.8
+_REF_TABLE_GAP = 0.4
+_TABLE_UNIT_PX = 30
+
+TABLE_LEFT = 4
+GROUP_W = _REF_GROUP * _TABLE_UNIT_PX
+PART_W = _REF_PART * _TABLE_UNIT_PX
+MW_W = _REF_MW * _TABLE_UNIT_PX
+PCT_W = _REF_PCT * _TABLE_UNIT_PX
+TABLE_TRACK_GAP = _REF_TABLE_GAP * _TABLE_UNIT_PX
+
+COL_GROUP = (TABLE_LEFT, TABLE_LEFT + GROUP_W)
+COL_PART = (COL_GROUP[1], COL_GROUP[1] + PART_W)
+COL_MW = (COL_PART[1], COL_PART[1] + MW_W)
+COL_PCT = (COL_MW[1], COL_MW[1] + PCT_W)
+TABLE_RIGHT = COL_PCT[1]
+TRACK_LEFT = TABLE_RIGHT + TABLE_TRACK_GAP
+LEFT = TRACK_LEFT  # exon / mutation track origin
+
 TRANSCRIPT_Y = 42
 EXON_H = 26
-ROW_GAP_PX = 2
-DOMAIN_Y = TRANSCRIPT_Y + EXON_H + ROW_GAP_PX
+TRANSCRIPT_DOMAIN_GAP = 12  # white break between transcript and domain rows
+DOMAIN_Y = TRANSCRIPT_Y + EXON_H + TRANSCRIPT_DOMAIN_GAP
 DOMAIN_H = 26
 ROW_GAP = 18
 TABLE_TOP = DOMAIN_Y + DOMAIN_H + ROW_GAP + 28
@@ -48,22 +75,75 @@ PATIENT_ROW_H = 28
 MIN_EXON_PX = 14
 N_EXONS = 79
 
+# Mutation bar insets — white margin around bars (not gray flanking boxes)
+MUT_BAR_V_PAD = 6
+MUT_BAR_H_PAD = 4
 
-def _draw_domain_box_svg(domain: ResolvedDomain) -> list[str]:
-    """Rounded rect at draw coords; biological coords used for alignment only."""
-    w = domain.draw_width
-    h = DOMAIN_H
-    rx = domain_corner_radius(w, h)
-    svgs = [
-        f'<rect x="{domain.draw_x0:.2f}" y="{DOMAIN_Y:.2f}" width="{w:.2f}" '
-        f'height="{h:.2f}" rx="{rx:.2f}" ry="{rx:.2f}" fill="{domain.fill}" '
-        f'stroke="#222" stroke-width="0.9"/>',
-        f'<text x="{(domain.draw_x0 + domain.draw_x1) / 2:.1f}" '
-        f'y="{DOMAIN_Y + DOMAIN_H / 2 + 4:.1f}" text-anchor="middle" '
-        f'font-size="{domain_font_size(w, h):.1f}" font-weight="700" pointer-events="none">'
-        f'{html.escape(domain.label)}</text>',
-    ]
-    return svgs
+
+def _row_label_x() -> float:
+    """Right-aligned labels in the gap between table and track."""
+    return TRACK_LEFT - 6
+
+
+def _domain_row_svgs(
+    resolved: list[ResolvedDomain],
+    segments: list[PartSegment],
+) -> tuple[list[str], list[str], list[str], list[str]]:
+    """Segment-aligned fills and borders inside rounded domain bubbles."""
+    defs: list[str] = []
+    fills: list[str] = []
+    outlines: list[str] = []
+    labels: list[str] = []
+
+    for domain in resolved:
+        x, y = domain.draw_x0, DOMAIN_Y
+        w, h = domain.draw_width, DOMAIN_H
+        rx = domain_corner_radius(w, h)
+        path_d = domain_bubble_svg_d(x, y, w, h, radius=rx)
+        clip_id = f"clip-dom-{domain.label}"
+        defs.append(f'<clipPath id="{clip_id}"><path d="{path_d}"/></clipPath>')
+
+        local = segments_in_xrange(segments, domain.draw_x0, domain.draw_x1)
+        fill_parts: list[str] = []
+        for seg in local:
+            ix0 = max(seg.x0, domain.draw_x0)
+            ix1 = min(seg.x1, domain.draw_x1)
+            if ix1 <= ix0:
+                continue
+            fill_parts.append(
+                f'<rect x="{ix0:.2f}" y="{y:.2f}" width="{(ix1 - ix0):.2f}" '
+                f'height="{h:.2f}" fill="{seg.fill}" stroke="none"/>'
+            )
+        if fill_parts:
+            fills.append(f'<g clip-path="url(#{clip_id})">{"".join(fill_parts)}</g>')
+
+        for k, seg in enumerate(local):
+            px0 = max(seg.x0, domain.draw_x0)
+            px1 = min(seg.x1, domain.draw_x1)
+            if px1 <= px0:
+                continue
+            part_clip_id = f"clip-dom-{domain.label}-s{k}"
+            defs.append(
+                f'<clipPath id="{part_clip_id}">'
+                f'<rect x="{px0:.2f}" y="{y - 1:.2f}" '
+                f'width="{(px1 - px0):.2f}" height="{h + 2:.2f}"/>'
+                f'</clipPath>'
+            )
+            outlines.append(
+                f'<g clip-path="url(#{clip_id})">'
+                f'<g clip-path="url(#{part_clip_id})">'
+                f'<path d="{path_d}" fill="none" stroke="{seg.border}" stroke-width="0.75"/>'
+                f'</g></g>'
+            )
+
+        labels.append(
+            f'<text x="{(domain.draw_x0 + domain.draw_x1) / 2:.1f}" '
+            f'y="{DOMAIN_Y + DOMAIN_H / 2 + 4:.1f}" text-anchor="middle" '
+            f'font-size="{domain_font_size(w, h):.1f}" font-weight="700" pointer-events="none">'
+            f'{html.escape(domain.label)}</text>'
+        )
+
+    return defs, fills, outlines, labels
 
 
 def _alignment_guide_svgs(
@@ -83,12 +163,13 @@ def _alignment_guide_svgs(
 
 def _compute_layout(chart_width: float) -> tuple[list[float], dict[int, tuple[float, float]]]:
     exon_table = get_exon_table()
+    track_width = max(400.0, chart_width - LEFT)
     total_bp = sum(e["bp"] for e in exon_table)
-    raw = [e["bp"] / total_bp * chart_width for e in exon_table]
+    raw = [e["bp"] / total_bp * track_width for e in exon_table]
     fixed = [w < MIN_EXON_PX for w in raw]
     fixed_total = sum(MIN_EXON_PX for f in fixed if f)
     raw_large = sum(w for w, f in zip(raw, fixed) if not f)
-    remaining = max(120.0, chart_width - fixed_total)
+    remaining = max(120.0, track_width - fixed_total)
     widths = [
         MIN_EXON_PX if f else (w / raw_large * remaining)
         for w, f in zip(raw, fixed)
@@ -107,7 +188,234 @@ def _bar_style(row: dict[str, Any]) -> dict[str, str]:
         return {"fill": "#111", "stroke": "#111", "text": "#fff"}
     if style == "outline":
         return {"fill": "#fff", "stroke": "#111", "text": "#111"}
-    return {"fill": "#9a9a9a", "stroke": "#333", "text": "#111"}
+    return {"fill": "#9a9a9a", "stroke": "#111", "text": "#111"}
+
+
+def _mutation_bar_box(
+    x0b: float,
+    x1b: float,
+    y: float,
+) -> tuple[float, float, float, float]:
+    """Bar rect with white margin on all sides (no gray flanking boxes)."""
+    span = max(x1b - x0b, 1.0)
+    h_pad = min(MUT_BAR_H_PAD, span * 0.12)
+    bx0 = x0b + h_pad
+    bx1 = x1b - h_pad
+    by = y + MUT_BAR_V_PAD
+    bh = PATIENT_ROW_H - 2 * MUT_BAR_V_PAD
+    return bx0, by, bx1 - bx0, bh
+
+
+def _color_band_svgs(
+    segments: list[PartSegment],
+    *,
+    y: float,
+    height: float,
+) -> list[str]:
+    """Domain-aligned vertical colour strips at a given row y."""
+    svgs: list[str] = []
+    for seg in segments:
+        w = seg.x1 - seg.x0
+        if w <= 0:
+            continue
+        svgs.append(
+            f'<rect x="{seg.x0:.2f}" y="{y:.2f}" width="{w:.2f}" '
+            f'height="{height:.2f}" fill="{seg.fill}" stroke="none"/>'
+        )
+    return svgs
+
+
+def _transcript_color_band_svgs(segments: list[PartSegment]) -> list[str]:
+    return _color_band_svgs(segments, y=TRANSCRIPT_Y, height=EXON_H)
+
+
+def _transcript_puzzle_fill_svgs(
+    segments: list[PartSegment],
+    exon_table: list[dict[str, Any]],
+    widths: list[float],
+    exon_x: dict[int, tuple[float, float]],
+) -> list[str]:
+    """Paint domain colours into puzzle bumps using global segment boundaries."""
+    svgs: list[str] = []
+    n_exons = len(exon_table)
+    for i, (e, w) in enumerate(zip(exon_table, widths)):
+        n = e["n"]
+        x0, x1 = exon_x[n]
+        bump_depth = calculate_bump_depth(w, EXON_H)
+        draw_x0, draw_x1 = exon_draw_xrange(i, n_exons, x0, x1, bump_depth)
+        clip_id = f"clip-e{n}"
+        local = segments_for_exon(segments, n)
+        fill_parts: list[str] = []
+        for seg in local:
+            ix0 = max(seg.x0, draw_x0)
+            ix1 = min(seg.x1, draw_x1)
+            if ix1 <= ix0:
+                continue
+            fill_parts.append(
+                f'<rect x="{ix0:.2f}" y="{TRANSCRIPT_Y:.2f}" width="{(ix1 - ix0):.2f}" '
+                f'height="{EXON_H:.2f}" fill="{seg.fill}" stroke="none"/>'
+            )
+        if fill_parts:
+            svgs.append(f'<g clip-path="url(#{clip_id})">{"".join(fill_parts)}</g>')
+    return svgs
+
+
+def _segment_boundary_lines_svgs(
+    segments: list[PartSegment],
+    exon_table: list[dict[str, Any]],
+    widths: list[float],
+    exon_x: dict[int, tuple[float, float]],
+    *,
+    y: float,
+    height: float,
+    row_height: float = EXON_H,
+) -> list[str]:
+    """Vertical dividers at internal part boundaries within multi-part exons."""
+    svgs: list[str] = []
+    boundaries: set[float] = set()
+    for i in range(len(segments) - 1):
+        if abs(segments[i].x1 - segments[i + 1].x0) < 1e-6:
+            boundaries.add(segments[i].x1)
+    n_exons = len(exon_table)
+    for i, (e, w) in enumerate(zip(exon_table, widths)):
+        if len(e["parts"]) < 2:
+            continue
+        x0, x1 = exon_x[e["n"]]
+        bump_depth = calculate_bump_depth(w, row_height)
+        _, draw_x1 = exon_draw_xrange(i, n_exons, x0, x1, bump_depth)
+        for bx in boundaries:
+            if x0 < bx < draw_x1:
+                border = next(
+                    (s.border for s in segments if abs(s.x1 - bx) < 1e-6),
+                    "#333",
+                )
+                svgs.append(
+                    f'<line x1="{bx:.2f}" y1="{y:.2f}" x2="{bx:.2f}" '
+                    f'y2="{y + height:.2f}" stroke="{border}" '
+                    f'stroke-width="0.9" opacity="0.8"/>'
+                )
+    return svgs
+
+
+def _transcript_outline_svgs(
+    segments: list[PartSegment],
+    exon_table: list[dict[str, Any]],
+    widths: list[float],
+    exon_x: dict[int, tuple[float, float]],
+) -> tuple[list[str], list[str], list[str]]:
+    """Puzzle-piece outlines and junction strokes over the colour band."""
+    defs: list[str] = []
+    exon_svgs: list[str] = []
+    junction_overlays: list[str] = []
+    n_exons = len(exon_table)
+
+    for i, (e, w) in enumerate(zip(exon_table, widths)):
+        n = e["n"]
+        x0, x1 = exon_x[n]
+        bump_depth = calculate_bump_depth(w, EXON_H)
+        draw_x0, draw_x1 = exon_draw_xrange(i, n_exons, x0, x1, bump_depth)
+
+        puzzle_d = build_exon_path(
+            x0, x1, TRANSCRIPT_Y, EXON_H,
+            e["five_prime"], e["three_prime"], bump_depth,
+        )
+        puzzle_clip_id = f"clip-e{n}"
+        defs.append(f'<clipPath id="{puzzle_clip_id}"><path d="{puzzle_d}"/></clipPath>')
+
+        stroke_d = build_exon_stroke_path(
+            x0, x1, TRANSCRIPT_Y, EXON_H,
+            e["five_prime"], e["three_prime"], bump_depth,
+            stroke_left=(i == 0),
+            stroke_right=(i == n_exons - 1),
+        )
+        tip = (
+            f"Exon {n} · {e['bp']} bp CDS\\n"
+            f"5′ {e['five_prime']} · 3′ {e['three_prime']}"
+            + (f"\\n{len(e['parts'])} domain segments" if len(e["parts"]) > 1 else "")
+        )
+
+        local = segments_for_exon(segments, n)
+        for k, seg in enumerate(local):
+            px0 = max(seg.x0, draw_x0)
+            px1 = min(seg.x1, draw_x1)
+            if px1 <= px0:
+                continue
+            part_clip_id = f"clip-e{n}-s{k}"
+            defs.append(
+                f'<clipPath id="{part_clip_id}">'
+                f'<rect x="{px0:.2f}" y="{TRANSCRIPT_Y - 1:.2f}" '
+                f'width="{(px1 - px0):.2f}" height="{EXON_H + 2:.2f}"/>'
+                f'</clipPath>'
+            )
+            exon_svgs.append(
+                f'<g clip-path="url(#{puzzle_clip_id})">'
+                f'<g clip-path="url(#{part_clip_id})">'
+                f'<path d="{stroke_d}" fill="none" stroke="{seg.border}" stroke-width="0.75"/>'
+                f'</g></g>'
+            )
+
+        exon_svgs.append(
+            f'<path class="exon" data-tip="{html.escape(tip)}" d="{puzzle_d}" '
+            f'fill="none" stroke="transparent" stroke-width="10"/>'
+        )
+
+        if i < n_exons - 1:
+            next_e = exon_table[i + 1]
+            next_w = widths[i + 1]
+            j_depth = min(bump_depth, calculate_bump_depth(next_w, EXON_H))
+            junction_d = build_junction_path(
+                x1, TRANSCRIPT_Y, EXON_H,
+                e["three_prime"], next_e["five_prime"],
+                j_depth,
+            )
+            left_seg = next((s for s in segments if abs(s.x1 - x1) < 1e-6), None)
+            right_seg = next((s for s in segments if abs(s.x0 - x1) < 1e-6), None)
+            left_border = left_seg.border if left_seg else part_border_color(e["parts"], index=-1)
+            right_border = right_seg.border if right_seg else part_border_color(next_e["parts"], index=0)
+            if left_border == right_border:
+                junction_overlays.append(
+                    f'<path d="{junction_d}" fill="none" stroke="{left_border}" '
+                    f'stroke-width="0.7"/>'
+                )
+            else:
+                left_clip = f"clip-junc-{n}-l"
+                right_clip = f"clip-junc-{n}-r"
+                defs.append(
+                    f'<clipPath id="{left_clip}">'
+                    f'<rect x="{(x1 - j_depth - 1):.2f}" y="{TRANSCRIPT_Y - 1:.2f}" '
+                    f'width="{(j_depth + 2):.2f}" height="{EXON_H + 2:.2f}"/>'
+                    f'</clipPath>'
+                )
+                defs.append(
+                    f'<clipPath id="{right_clip}">'
+                    f'<rect x="{x1:.2f}" y="{TRANSCRIPT_Y - 1:.2f}" '
+                    f'width="{(j_depth + 2):.2f}" height="{EXON_H + 2:.2f}"/>'
+                    f'</clipPath>'
+                )
+                junction_overlays.append(
+                    f'<g clip-path="url(#{left_clip})">'
+                    f'<path d="{junction_d}" fill="none" stroke="{left_border}" '
+                    f'stroke-width="0.7"/></g>'
+                )
+                junction_overlays.append(
+                    f'<g clip-path="url(#{right_clip})">'
+                    f'<path d="{junction_d}" fill="none" stroke="{right_border}" '
+                    f'stroke-width="0.7"/></g>'
+                )
+
+        fs = 11 if w >= 16 else (9 if w >= 10 else 7)
+        exon_svgs.append(
+            f'<text x="{x0 + w/2:.1f}" y="{TRANSCRIPT_Y + EXON_H/2 + 4:.1f}" '
+            f'text-anchor="middle" font-size="{fs}" font-weight="600" pointer-events="none">{n}</text>'
+        )
+
+    return defs, exon_svgs, junction_overlays
+
+
+def map_iframe_height(n_patient_rows: int, *, chart_width: float = 2000) -> int:
+    """Streamlit iframe height — matches intrinsic SVG pixel height."""
+    n_rows = max(n_patient_rows, 1)
+    return int(TABLE_TOP + n_rows * PATIENT_ROW_H + 64)
 
 
 def build_interactive_map_html(
@@ -122,85 +430,29 @@ def build_interactive_map_html(
     n_rows = max(len(rows), 1)
     height = TABLE_TOP + n_rows * PATIENT_ROW_H + 40
 
-    defs: list[str] = []
-    exon_svgs: list[str] = []
-    domain_svgs: list[str] = []
-
     domain_map = get_domain_map()
     resolved = resolve_domains(domain_map, exon_table, exon_x, gap=DOMAIN_GAP_PX)
-    for domain in resolved:
-        domain_svgs.extend(_draw_domain_box_svg(domain))
 
-    # Transcript: clip puzzle outline + solid per-part rects at absolute x
-    junction_overlays: list[str] = []
-    n_exons = len(exon_table)
-    for i, (e, w) in enumerate(zip(exon_table, widths)):
-        n = e["n"]
-        x0 = exon_x[n][0]
-        x1 = exon_x[n][1]
-        bump_depth = calculate_bump_depth(w, EXON_H)
-        clip_id = f"clip-e{n}"
-        path_d = build_exon_path(
-            x0, x1, TRANSCRIPT_Y, EXON_H,
-            e["five_prime"], e["three_prime"],
-            bump_depth,
-        )
-        defs.append(f'<clipPath id="{clip_id}"><path d="{path_d}"/></clipPath>')
+    part_segments = build_part_segments(exon_table, exon_x)
+    domain_defs, domain_fill_svgs, domain_outline_svgs, domain_label_svgs = _domain_row_svgs(
+        resolved, part_segments,
+    )
+    outline_defs, exon_svgs, junction_overlays = _transcript_outline_svgs(
+        part_segments, exon_table, widths, exon_x,
+    )
+    color_band_svgs = _transcript_color_band_svgs(part_segments)
+    puzzle_fill_svgs = _transcript_puzzle_fill_svgs(
+        part_segments, exon_table, widths, exon_x,
+    )
+    transcript_line_svgs = _segment_boundary_lines_svgs(
+        part_segments, exon_table, widths, exon_x,
+        y=TRANSCRIPT_Y, height=EXON_H,
+    )
+    domain_line_svgs = _segment_boundary_lines_svgs(
+        part_segments, exon_table, widths, exon_x,
+        y=DOMAIN_Y, height=DOMAIN_H,
+    )
 
-        part_rects = part_rects_for_exon(n, exon_x, e["parts"])
-        fill_svgs: list[str] = []
-        for j, (rx0, rx1, fill, _border) in enumerate(part_rects):
-            rw = rx1 - rx0
-            fill_svgs.append(
-                f'<rect x="{rx0:.2f}" y="{TRANSCRIPT_Y:.2f}" width="{rw:.2f}" '
-                f'height="{EXON_H:.2f}" fill="{fill}" stroke="none"/>'
-            )
-            if j < len(part_rects) - 1:
-                blend_w = min(w * 0.06, 6.0)
-                bx = rx1
-                fill_svgs.append(
-                    f'<rect x="{(bx - blend_w/2):.2f}" y="{TRANSCRIPT_Y:.2f}" '
-                    f'width="{blend_w:.2f}" height="{EXON_H:.2f}" fill="{part_rects[j+1][2]}" '
-                    f'opacity="0.4" stroke="none"/>'
-                )
-
-        tip = (
-            f"Exon {n} · {e['bp']} bp CDS\\n"
-            f"5′ {e['five_prime']} · 3′ {e['three_prime']}"
-            + (f"\\n{len(e['parts'])} domain segments" if len(e["parts"]) > 1 else "")
-        )
-        exon_svgs.append(f'<g clip-path="url(#{clip_id})">{"".join(fill_svgs)}</g>')
-
-        stroke_d = build_exon_stroke_path(
-            x0, x1, TRANSCRIPT_Y, EXON_H,
-            e["five_prime"], e["three_prime"], bump_depth,
-            stroke_left=(i == 0),
-            stroke_right=(i == n_exons - 1),
-        )
-        exon_svgs.append(
-            f'<path class="exon" data-tip="{html.escape(tip)}" d="{stroke_d}" '
-            f'fill="none" stroke="#4a4a4a" stroke-width="0.6"/>'
-        )
-
-        if i < n_exons - 1:
-            next_e = exon_table[i + 1]
-            next_w = widths[i + 1]
-            j_depth = min(bump_depth, calculate_bump_depth(next_w, EXON_H))
-            junction_d = build_junction_path(
-                x1, TRANSCRIPT_Y, EXON_H,
-                e["three_prime"], next_e["five_prime"],
-                j_depth,
-            )
-            junction_overlays.append(
-                f'<path d="{junction_d}" fill="none" stroke="#4a4a4a" stroke-width="0.55"/>'
-            )
-        fs = 11 if w >= 16 else (9 if w >= 10 else 7)
-        exon_svgs.append(
-            f'<text x="{x0 + w/2:.1f}" y="{TRANSCRIPT_Y + EXON_H/2 + 4:.1f}" '
-            f'text-anchor="middle" font-size="{fs}" font-weight="600" pointer-events="none">{n}</text>'
-        )
-
-    # Isoform arrows
     iso_svgs: list[str] = []
     for exon, label in ISOFORM_ANNOTATIONS:
         xa = exon_x[exon][0] + 2
@@ -217,27 +469,34 @@ def build_interactive_map_html(
             f'{html.escape(label)}</text>'
         )
 
-    # Hinge guides — dashed lines at H1–H4 biological start boundaries
     guide_svgs: list[str] = []
-    y_top = TRANSCRIPT_Y
+    y_top = DOMAIN_Y
     y_bot = TABLE_TOP + len(rows) * PATIENT_ROW_H
     for xg in hinge_guide_x_positions(domain_map, exon_table, exon_x):
         guide_svgs.append(
-            f'<line x1="{xg:.2f}" y1="{y_top:.2f}" x2="{xg:.2f}" y2="{y_bot:.2f}" '
-            f'stroke="#888" stroke-width="1" stroke-dasharray="5,4"/>'
+            f'<line class="hinge-guide" x1="{xg:.2f}" y1="{y_top:.2f}" x2="{xg:.2f}" y2="{y_bot:.2f}" '
+            f'stroke="#666" stroke-width="1.2" stroke-dasharray="5,4"/>'
         )
     if SHOW_ALIGNMENT_GUIDES:
         guide_svgs.extend(_alignment_guide_svgs(resolved, y_top, y_bot))
 
-    # Patient table + bars
     table_svgs: list[str] = []
-    col_group, col_part, col_mw, col_pct = 12, 48, 98, 128
-    table_svgs.append(
-        f'<text x="{col_group}" y="{TABLE_TOP - 8}" font-size="12" font-weight="700">Group</text>'
-        f'<text x="{col_part}" y="{TABLE_TOP - 8}" font-size="12" font-weight="700">Participant</text>'
-        f'<text x="{col_mw}" y="{TABLE_TOP - 8}" font-size="12" font-weight="700">MW</text>'
-        f'<text x="{col_pct}" y="{TABLE_TOP - 8}" font-size="12" font-weight="700">%Dys(WB)</text>'
-    )
+    header_h = 22
+    header_y = TABLE_TOP - header_h - 4
+    for x0, x1, label in [
+        (COL_GROUP[0], COL_GROUP[1], "Group"),
+        (COL_PART[0], COL_PART[1], "Participant"),
+        (COL_MW[0], COL_MW[1], "MW"),
+        (COL_PCT[0], COL_PCT[1], "%Dys(WB)"),
+    ]:
+        table_svgs.append(
+            f'<rect x="{x0}" y="{header_y}" width="{x1 - x0}" height="{header_h}" '
+            f'fill="#ffffff" stroke="#000" stroke-width="1"/>'
+        )
+        table_svgs.append(
+            f'<text x="{(x0 + x1) / 2:.1f}" y="{header_y + header_h / 2 + 4:.1f}" '
+            f'text-anchor="middle" font-size="11" font-weight="700">{label}</text>'
+        )
 
     if not rows:
         table_svgs.append(
@@ -245,10 +504,11 @@ def build_interactive_map_html(
             f'Select mutations below and click Plot selected on map</text>'
         )
     else:
+        group_bounds: dict[str, list[float]] = {}
         y = TABLE_TOP
         for row in rows:
             pid = html.escape(str(row.get("id", "")))
-            grp = html.escape(str(row.get("group", "") or "—"))
+            grp = str(row.get("group", "") or "—")
             kda = row.get("expected_protein_size_kda", "")
             try:
                 mw = f"{float(kda):.1f}"
@@ -261,20 +521,43 @@ def build_interactive_map_html(
                 pct_fill = pct_dys_color(pct)
             except (TypeError, ValueError):
                 pct_text = str(pct_raw) if pct_raw else ""
-                pct_fill = "#eee"
+                pct_fill = "#ffffff"
 
-            table_svgs.append(f'<text x="{col_group}" y="{y + 18}" font-size="12" font-weight="700">{grp}</text>')
-            table_svgs.append(f'<text x="{col_part}" y="{y + 18}" font-size="12">{pid}</text>')
-            table_svgs.append(f'<text x="{col_mw}" y="{y + 18}" font-size="12">{mw}</text>')
+            group_bounds.setdefault(grp, [y, y + PATIENT_ROW_H])
+            group_bounds[grp][1] = y + PATIENT_ROW_H
+
+            for x0, x1, text in [
+                (COL_PART[0], COL_PART[1], pid),
+                (COL_MW[0], COL_MW[1], mw),
+            ]:
+                table_svgs.append(
+                    f'<rect x="{x0}" y="{y}" width="{x1 - x0}" height="{PATIENT_ROW_H}" '
+                    f'fill="#ffffff" stroke="#000" stroke-width="0.6"/>'
+                )
+                table_svgs.append(
+                    f'<text x="{(x0 + x1) / 2:.1f}" y="{y + PATIENT_ROW_H / 2 + 4:.1f}" '
+                    f'text-anchor="middle" font-size="11">{text}</text>'
+                )
+
             table_svgs.append(
-                f'<rect x="{col_pct - 4}" y="{y + 2}" width="52" height="22" fill="{pct_fill}" '
-                f'stroke="#333" stroke-width="0.8"/>'
+                f'<rect x="{COL_PCT[0]}" y="{y}" width="{COL_PCT[1] - COL_PCT[0]}" '
+                f'height="{PATIENT_ROW_H}" fill="{pct_fill}" stroke="#000" stroke-width="0.6"/>'
             )
             if pct_text:
                 table_svgs.append(
-                    f'<text x="{col_pct + 22}" y="{y + 18}" text-anchor="middle" '
-                    f'font-size="11" font-weight="700">{pct_text}</text>'
+                    f'<text x="{(COL_PCT[0] + COL_PCT[1]) / 2:.1f}" y="{y + PATIENT_ROW_H / 2 + 4:.1f}" '
+                    f'text-anchor="middle" font-size="10" font-weight="700">{pct_text}</text>'
                 )
+
+            table_svgs.append(
+                f'<rect x="{TABLE_RIGHT:.1f}" y="{y}" width="{TRACK_LEFT - TABLE_RIGHT:.1f}" '
+                f'height="{PATIENT_ROW_H}" fill="#ffffff" stroke="none"/>'
+            )
+
+            table_svgs.append(
+                f'<rect x="{LEFT}" y="{y}" width="{end_x - LEFT:.1f}" height="{PATIENT_ROW_H}" '
+                f'fill="#ffffff" stroke="none"/>'
+            )
 
             rng = exon_range_from_row(row)
             if rng:
@@ -282,34 +565,75 @@ def build_interactive_map_html(
                 x0b, x1b = exon_x[first][0], exon_x[last][1]
                 sty = _bar_style(row)
                 lbl = str(first) if first == last else f"{first}-{last}"
+                bx, by, bw, bh = _mutation_bar_box(x0b, x1b, y)
                 table_svgs.append(
                     f'<rect class="mut-bar" data-tip="{html.escape(pid)}: exons {lbl}" '
-                    f'x="{x0b:.1f}" y="{y + 4:.1f}" width="{x1b - x0b:.1f}" height="{PATIENT_ROW_H - 8:.1f}" '
+                    f'x="{bx:.1f}" y="{by:.1f}" width="{bw:.1f}" height="{bh:.1f}" '
                     f'fill="{sty["fill"]}" stroke="{sty["stroke"]}" stroke-width="1.2" rx="1"/>'
                 )
                 table_svgs.append(
-                    f'<text x="{(x0b+x1b)/2:.1f}" y="{y + 18}" text-anchor="middle" '
-                    f'font-size="11" font-weight="700" fill="{sty["text"]}">{lbl}</text>'
+                    f'<text x="{(x0b + x1b) / 2:.1f}" y="{y + PATIENT_ROW_H / 2 + 4:.1f}" '
+                    f'text-anchor="middle" font-size="11" font-weight="700" fill="{sty["text"]}">'
+                    f'{lbl}</text>'
                 )
             y += PATIENT_ROW_H
 
+        for grp, (ytop, ybot) in group_bounds.items():
+            table_svgs.append(
+                f'<rect x="{COL_GROUP[0]}" y="{ytop}" width="{COL_GROUP[1] - COL_GROUP[0]}" '
+                f'height="{ybot - ytop}" fill="#ffffff" stroke="#000" stroke-width="1"/>'
+            )
+            table_svgs.append(
+                f'<text x="{(COL_GROUP[0] + COL_GROUP[1]) / 2:.1f}" '
+                f'y="{(ytop + ybot) / 2 + 5:.1f}" text-anchor="middle" '
+                f'font-size="18" font-weight="700">{html.escape(grp)}</text>'
+            )
+            table_svgs.append(
+                f'<line x1="{TABLE_LEFT}" y1="{ytop:.1f}" x2="{end_x:.1f}" y2="{ytop:.1f}" '
+                f'stroke="#000" stroke-width="1.4"/>'
+            )
+
+        table_bottom = TABLE_TOP + len(rows) * PATIENT_ROW_H
+        table_svgs.append(
+            f'<rect x="{TABLE_LEFT}" y="{header_y}" width="{TABLE_RIGHT - TABLE_LEFT}" '
+            f'height="{table_bottom - header_y}" fill="none" stroke="#000" stroke-width="1.6"/>'
+        )
+        table_svgs.append(
+            f'<line x1="{TRACK_LEFT:.1f}" y1="{header_y:.1f}" x2="{TRACK_LEFT:.1f}" '
+            f'y2="{table_bottom:.1f}" stroke="#000" stroke-width="1.6"/>'
+        )
+
     svg_body = "\n".join([
-        f'<defs>{"".join(defs)}</defs>',
-        *guide_svgs,
-        *domain_svgs,
+        f'<defs>{"".join(outline_defs)}{"".join(domain_defs)}</defs>',
+        *color_band_svgs,
+        *puzzle_fill_svgs,
+        *transcript_line_svgs,
+        *domain_fill_svgs,
+        *domain_line_svgs,
+        *domain_outline_svgs,
+        *domain_label_svgs,
+        f'<rect x="{LEFT:.0f}" y="{TRANSCRIPT_Y + EXON_H:.2f}" '
+        f'width="{end_x - LEFT:.0f}" height="{TRANSCRIPT_DOMAIN_GAP:.2f}" '
+        f'fill="#ffffff" stroke="none"/>',
         *exon_svgs,
         *junction_overlays,
         *iso_svgs,
-        f'<text x="10" y="{TRANSCRIPT_Y + EXON_H/2 + 4}" font-size="13" font-weight="700">Transcript →</text>',
-        f'<text x="10" y="{DOMAIN_Y + DOMAIN_H/2 + 4}" font-size="13" font-weight="700">Domain →</text>',
+        f'<text x="{_row_label_x():.1f}" y="{TRANSCRIPT_Y + EXON_H/2 + 4}" '
+        f'text-anchor="end" font-size="13" font-weight="700">Transcript →</text>',
+        f'<text x="{_row_label_x():.1f}" y="{DOMAIN_Y + DOMAIN_H/2 + 4}" '
+        f'text-anchor="end" font-size="13" font-weight="700">Domain →</text>',
+        f'<line x1="{TRACK_LEFT:.1f}" y1="{TRANSCRIPT_Y:.1f}" x2="{TRACK_LEFT:.1f}" '
+        f'y2="{DOMAIN_Y + DOMAIN_H:.1f}" stroke="#000" stroke-width="1.2"/>',
         *table_svgs,
+        *guide_svgs,
     ])
 
     return f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8"/>
 <style>
   body {{ margin:0; background:#fff; }}
-  svg {{ font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; }}
+  .map-scroll {{ overflow-x:auto; overflow-y:hidden; width:100%; }}
+  svg {{ display:block; font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; }}
   .exon, .mut-bar {{ cursor: pointer; }}
   .exon:hover, .mut-bar:hover {{ filter: brightness(0.94); }}
   #tip {{
@@ -320,10 +644,13 @@ def build_interactive_map_html(
   }}
 </style></head><body>
 <div id="tip"></div>
-<svg viewBox="0 0 {end_x:.0f} {height:.0f}" width="100%" xmlns="http://www.w3.org/2000/svg">
+<div class="map-scroll">
+<svg viewBox="0 0 {end_x:.0f} {height:.0f}" width="{end_x:.0f}" height="{height:.0f}"
+     xmlns="http://www.w3.org/2000/svg">
   <text x="{end_x/2:.0f}" y="22" text-anchor="middle" font-size="16" font-weight="700">{html.escape(title)}</text>
   {svg_body}
 </svg>
+</div>
 <script>
 const tip = document.getElementById('tip');
 document.querySelectorAll('[data-tip]').forEach(el => {{

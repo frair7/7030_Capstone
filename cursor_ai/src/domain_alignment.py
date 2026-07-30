@@ -156,13 +156,15 @@ def hinge_guide_x_positions(
     exon_table: list[dict[str, Any]],
     exon_x: dict[int, tuple[float, float]],
 ) -> list[float]:
-    """Dashed guide x-positions at the 5′ start of each hinge (H1–H4)."""
+    """Dashed guide x-positions at the 5′ start and 3′ end of each hinge (H1–H4)."""
     domains = resolve_domains(domain_map, exon_table, exon_x, gap=0.0)
-    by_label = {d.label: d.biological_x0 for d in domains}
+    by_label = {d.label: d for d in domains}
     positions: list[float] = []
     for label in ("H1", "H2", "H3", "H4"):
         if label in by_label:
-            positions.append(by_label[label])
+            d = by_label[label]
+            positions.append(d.biological_x0)
+            positions.append(d.biological_x1)
     return positions
 
 

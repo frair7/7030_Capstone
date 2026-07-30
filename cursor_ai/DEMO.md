@@ -8,10 +8,11 @@ Use this outline during your capstone presentation (~8 minutes).
 module load miniconda3/24.1.2-py310
 conda activate 7030_capstone
 cd ~/7030_Capstone/cursor_ai
-python -m streamlit run app.py --server.port 20001
+export MPLCONFIGDIR=~/7030_Capstone/cursor_ai/.mplconfig
+python -m streamlit run app.py --server.port 8503 --server.headless true
 ```
 
-Open `http://localhost:20001` in your OSC browser.
+Open **http://localhost:8503/Mutation_Explorer** (OSC browser or SSH tunnel).
 
 ## Demo flow
 
@@ -19,17 +20,17 @@ Open `http://localhost:20001` in your OSC browser.
 - Project title and **research-use-only** warning
 - Reference transcript: NM_004006.3 / GRCh38 / 79 exons
 
-### 2. Mutation Explorer (3 min)
-- Input: `del45-50` → **Run analysis**
-- Show parsed summary: exons 45–50, out of frame
-- Point out transcript map: deleted exons in red
-- Junction: exon 44 | 51
-- Toggle **Exon-order schematic** ↔ **Transcript-scale**
-- Download CSV / text report
+### 2. Mutation Explorer (4 min)
+- Show **transcript row**: puzzle-piece exons with domain-colored fills and matching border hues
+- Show **domain row**: protein bubbles aligned to the same x-coordinates
+- Point out **hinge dashed guides** (8 lines at H1–H4 boundaries)
+- Scroll catalog table → select 2–3 mutations → **Plot selected on map**
+- Show deletion bars with Group / Participant / MW / %Dys(WB) panel on the left
+- Hover an exon for CDS length; hover a bar for participant details
+- Optional: expand **Download static map (PNG)**
 
 ### 3. Exon Skipping Analysis (2 min)
 - Show ranked candidates (computational only)
-- Select a candidate → updated map with purple skip highlights
 - Read assumptions aloud — not a treatment recommendation
 
 ### 4. Reference Map (1 min)
@@ -37,10 +38,11 @@ Open `http://localhost:20001` in your OSC browser.
 - Mention Ensembl provenance
 
 ### 5. Methods & Limitations (1 min)
-- Frame calculation from splice phases, not hard-coded tables
+- Frame calculation from splice phases
 - Known limitations and non-clinical disclaimer
 
 ## Q&A talking points
 - Minus strand: exon 1 = highest genomic coordinate
-- Frame = coding bases removed mod 3 + phase cross-check
+- Transcript colors follow **coding position**, not whole-exon domain labels
+- Multi-part exons (e.g. exon 8 ABD→H1, exon 17 R3→H2) split proportionally inside one puzzle shape
 - Candidates ranked by fewest extra exons skipped

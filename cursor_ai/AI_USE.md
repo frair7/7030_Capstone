@@ -22,7 +22,7 @@
 ### Phase 3 — Core analysis
 - `src/models.py`, `variant_parser.py`, `coordinate_mapper.py`
 - `frame_analysis.py`, `exon_skipping.py` — frame logic from splice phases
-- pytest suite (48+ tests)
+- pytest suite (82 tests)
 
 ### Phase 4 — Visualization
 - Plotly combined transcript + domain figure (`src/visualization.py`)
@@ -31,26 +31,30 @@
 - Pages: Mutation Explorer, Exon Skipping, Reference Map, Methods
 - `src/ui_helpers.py`, `src/reporting.py` — CSV/text/HTML downloads
 
-### Mutation Explorer redesign (in progress)
-- Mutation catalog (`data/mutation_catalog.csv`, 101 rows from legacy CSV)
+### Mutation Explorer cohort map (complete)
+- Mutation catalog (`data/mutation_catalog.csv`)
 - Intake form, autofill, filters, checkbox table
-- **Cohort mutation map** rebuilt with matplotlib to match published figure:
-  - Equal-width exon units, puzzle-piece shapes (`src/exon_shape_renderer.py`)
-  - `data/dp427m_exon_edge_shapes.csv` — curated 5′/3′ edge shapes
-  - `src/mutation_map_figure.py` — transcript + domain + patient deletion bars
-  - Aligned to user's Claude `make_figure.py` reference code
+- **Interactive SVG cohort map** (`src/mutation_map_svg.py`):
+  - Proportional exon widths from CDS bp
+  - Puzzle-piece shapes with domain-aligned colors and per-segment borders
+  - Domain row bubbles with matching fill/border x-coordinates
+  - 8 hinge dashed guides, 12 px transcript/domain gap
+  - White metadata panel; mutation bars without gray flanking boxes
+- **Static PNG export** (`src/mutation_map_figure.py`)
+- Authoritative data: `scripts/reference_make_figure.py` (`EXON_TABLE`, `DOMAIN_MAP`)
 
-## Context file for future sessions
+## Context files for future sessions
 
-See **[ai_prompt.md](ai_prompt.md)** for full project handoff context, file map, and resume instructions.
+- **[ai_prompt.md](ai_prompt.md)** — full project handoff
+- Per-folder `ai_prompt.md` in `data/`, `src/`, `pages/`, `scripts/`, `tests/`
 
 ## Major prompts
 
 1. Full capstone specification: DMD Mutation and Exon-Skipping Explorer (phased build).
-2. Phase 1-only: scaffold in `cursor_ai/` without touching parent repo scripts.
-3. Mutation Explorer as catalog with 15 columns + phenotype and cohort map.
-4. Rebuild map to match reference figure; incorporate Claude/ChatGPT reference code.
-5. Fix transcript map: equal-width exons, puzzle pieces, reference colors.
+2. Mutation Explorer as catalog with 15 columns + phenotype and cohort map.
+3. Rebuild map to match reference figure; incorporate Claude/ChatGPT reference code.
+4. Transcript puzzle shapes over continuous color band; borders correlate with underlying domain hue.
+5. Domain row alignment, hinge guides, left panel layout, R3/H2 exon 17 boundary fix.
 
 ## Manual review checklist
 

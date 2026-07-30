@@ -19,7 +19,7 @@ from src.mutation_catalog import (
     save_catalog,
 )
 from src.mutation_map_figure import create_cohort_mutation_map
-from src.mutation_map_svg import build_interactive_map_html
+from src.mutation_map_svg import build_interactive_map_html, map_iframe_height
 from src.region_parser import parse_quick_entry
 from src.streamlit_theme import apply_widescreen_theme, render_nav_bar
 from src.ui_helpers import check_reference_data, init_session_state, render_research_warning
@@ -82,7 +82,8 @@ map_html = build_interactive_map_html(
     chart_width=2000,
     title="DMD transcript & mutation alignment",
 )
-components.html(map_html, height=min(520, 220 + len(map_rows) * 32), scrolling=False)
+iframe_h = map_iframe_height(len(map_rows))
+components.html(map_html, height=iframe_h, scrolling=True)
 
 with st.expander("Download static map (PNG)", expanded=False):
     map_fig = create_cohort_mutation_map(

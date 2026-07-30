@@ -51,17 +51,44 @@ def test_h1_edges_match_part_segments() -> None:
     assert abs(h1.x1 - h1_part10[1]) < 1e-6
 
 
-def test_four_hinge_guides() -> None:
+def test_r3_ends_where_h2_begins() -> None:
+    """R3 must not include the trailing R4 sliver in exon 17."""
+    _, exon_x = _layout()
+    exon_table = get_exon_table()
+    dm = get_domain_map()
+    r3 = next(b for b in build_aligned_domain_bubbles(dm, exon_table, exon_x) if b.label == "R3")
+    h2 = next(b for b in build_aligned_domain_bubbles(dm, exon_table, exon_x) if b.label == "H2")
+    assert abs(r3.x1 - h2.x0) < 1e-6
+
+    e17 = next(e for e in exon_table if e["n"] == 17)
+    xa, xb = exon_x[17]
+    h2_start_x = xa + e17["parts"][1][0] * (xb - xa)
+    assert abs(r3.x1 - h2_start_x) < 1e-6
+
+
+def test_r4_includes_exon_17_trailing_sliver() -> None:
+    """R4 begins at the 3′ yellow segment in exon 17 after H2."""
+    _, exon_x = _layout()
+    exon_table = get_exon_table()
+    dm = get_domain_map()
+    r4 = next(b for b in build_aligned_domain_bubbles(dm, exon_table, exon_x) if b.label == "R4")
+    h2 = next(b for b in build_aligned_domain_bubbles(dm, exon_table, exon_x) if b.label == "H2")
+    assert abs(r4.x0 - h2.x1) < 1e-6
+
+
+def test_hinge_guides_include_start_and_end() -> None:
     _, exon_x = _layout()
     xs = hinge_guide_x_positions(get_domain_map(), get_exon_table(), exon_x)
-    assert len(xs) == 4
-    labels = {b.label: b.x0 for b in build_aligned_domain_bubbles(
-        get_domain_map(), get_exon_table(), exon_x
-    ) if b.label in ("H1", "H2", "H3", "H4")}
-    assert abs(xs[0] - labels["H1"]) < 1e-6
-    assert abs(xs[1] - labels["H2"]) < 1e-6
-    assert abs(xs[2] - labels["H3"]) < 1e-6
-    assert abs(xs[3] - labels["H4"]) < 1e-6
+    assert len(xs) == 8
+    by_label = {
+        b.label: b
+        for b in build_aligned_domain_bubbles(get_domain_map(), get_exon_table(), exon_x)
+        if b.label in ("H1", "H2", "H3", "H4")
+    }
+    for label in ("H1", "H2", "H3", "H4"):
+        b = by_label[label]
+        assert any(abs(x - b.x0) < 1e-6 for x in xs)
+        assert any(abs(x - b.x1) < 1e-6 for x in xs)
 
 
 def test_repeat_bubbles_do_not_overlap() -> None:

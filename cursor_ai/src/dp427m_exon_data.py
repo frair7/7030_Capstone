@@ -36,8 +36,9 @@ PHENOTYPE_OPTIONS = [
 ]
 
 
-@lru_cache(maxsize=1)
-def load_dp427m_data() -> tuple[list[dict[str, Any]], list[tuple[int, int, str, str]]]:
+@lru_cache(maxsize=2)
+def load_dp427m_data(mtime: float) -> tuple[list[dict[str, Any]], list[tuple[int, int, str, str]]]:
+    del mtime  # cache key only — reload when reference script file changes
     src = REFERENCE_SCRIPT.read_text(encoding="utf-8")
     start = src.index("EXON_TABLE = [")
     end = src.index("# 3. Geometry helpers")
@@ -46,12 +47,16 @@ def load_dp427m_data() -> tuple[list[dict[str, Any]], list[tuple[int, int, str, 
     return ns["EXON_TABLE"], ns["DOMAIN_MAP"]
 
 
+def _reference_mtime() -> float:
+    return REFERENCE_SCRIPT.stat().st_mtime
+
+
 def get_exon_table() -> list[dict[str, Any]]:
-    return load_dp427m_data()[0]
+    return load_dp427m_data(_reference_mtime())[0]
 
 
 def get_domain_map() -> list[tuple[int, int, str, str]]:
-    return load_dp427m_data()[1]
+    return load_dp427m_data(_reference_mtime())[1]
 
 
 def bar_style_for_phenotype(phenotype: str) -> str:

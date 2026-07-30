@@ -28,8 +28,6 @@ from src.domain_alignment import (
     DOMAIN_GAP_DATA,
     ResolvedDomain,
     SHOW_ALIGNMENT_GUIDES,
-    domain_corner_radius,
-    domain_font_size,
     hinge_guide_x_positions,
     resolve_domains,
 )
@@ -39,14 +37,15 @@ from src.exon_display_config import (
     COLOR_MUTATION_BAR_OUTLINE,
     pct_dys_color,
 )
-from src.exon_shape_renderer import add_exon_patch
+from src.exon_shape_renderer import add_exon_outline, draw_domain_row, draw_transcript_color_band
+from src.part_segments import build_part_segments
 from src.models import ExonRecord
 from src.mutation_viz import exon_range_from_row
 from src.puzzle_geometry import calculate_bump_depth
 
 # Layout — transcript and domain rows share identical exon x-positions
 ROW_H = 1.0
-ROW_GAP = 0.02           # minimal gap between stacked rows
+ROW_GAP = 12 / 26          # white break between transcript and domain rows (matches SVG)
 EXON_ROW_Y = 0.0
 DOMAIN_ROW_Y = EXON_ROW_Y - ROW_H - ROW_GAP
 TABLE_TOP_Y = DOMAIN_ROW_Y - ROW_H - 1.65
@@ -60,34 +59,28 @@ EXON_H = 26.0  # pixel reference for bump-depth scaling
 INCHES_PER_DATA_UNIT = 0.38
 FONT_SCALE = 1.45
 
+MUT_BAR_V_PAD = 0.10
+MUT_BAR_H_PAD = 0.06
 
-def _draw_domain_box_mpl(ax: plt.Axes, domain: ResolvedDomain) -> None:
-    """Rounded domain box at draw coords; biological coords for alignment only."""
-    w = domain.draw_width
-    h = ROW_H
-    rx = domain_corner_radius(w, h)
-    patch = mpatches.FancyBboxPatch(
-        (domain.draw_x0, DOMAIN_ROW_Y),
-        w,
-        h,
-        boxstyle=f"round,pad=0,rounding_size={rx}",
-        facecolor=domain.fill,
-        edgecolor="black",
-        lw=0.9,
-        zorder=3,
-    )
-    ax.add_patch(patch)
-    fs = domain_font_size(w, h) * FONT_SCALE / 1.1
+
+def _draw_domains(
+    ax: plt.Axes,
+    exon_x: dict[int, tuple[float, float]],
+) -> list[ResolvedDomain]:
     ax.text(
-        (domain.draw_x0 + domain.draw_x1) / 2,
-        DOMAIN_ROW_Y + ROW_H / 2,
-        domain.label,
-        ha="center",
-        va="center",
-        fontsize=fs,
-        fontweight="bold",
-        zorder=4,
+        LEFT_MARGIN - 0.3, DOMAIN_ROW_Y + ROW_H / 2, "Domain \u2192",
+        ha="right", va="center", fontsize=9 * FONT_SCALE / 1.1, fontweight="bold",
     )
+    exon_table = get_exon_table()
+    segments = build_part_segments(exon_table, exon_x)
+    resolved = resolve_domains(
+        get_domain_map(), exon_table, exon_x, gap=DOMAIN_GAP_DATA,
+    )
+    draw_domain_row(
+        ax, resolved, segments, DOMAIN_ROW_Y, ROW_H,
+        zorder=3, font_scale=FONT_SCALE / 1.1,
+    )
+    return resolved
 
 
 def _draw_alignment_guides_mpl(
@@ -107,8 +100,22 @@ STYLE_FACE = {
     "grey": COLOR_MUTATION_BAR,
     "black": COLOR_MUTATION_BAR_BLACK,
     "outline": COLOR_MUTATION_BAR_OUTLINE,
-    "point": "#c9c9c9",
 }
+
+
+def _mutation_bar_box(
+    x0b: float,
+    x1b: float,
+    y: float,
+) -> tuple[float, float, float, float]:
+    """Bar rect with white margin on all sides."""
+    span = max(x1b - x0b, 0.01)
+    h_pad = min(MUT_BAR_H_PAD, span * 0.12)
+    bx0 = x0b + h_pad
+    bx1 = x1b - h_pad
+    by = y - PATIENT_ROW_H + MUT_BAR_V_PAD
+    bh = PATIENT_ROW_H - 2 * MUT_BAR_V_PAD
+    return bx0, by, bx1 - bx0, bh
 
 
 def _compute_exon_layout() -> tuple[list[float], dict[int, tuple[float, float]]]:
@@ -154,13 +161,23 @@ def _bar_label(row: dict[str, Any]) -> str:
 
 
 def _draw_transcript(ax: plt.Axes, widths: list[float], exon_x: dict[int, tuple[float, float]]) -> None:
-    for i, (e, w) in enumerate(zip(get_exon_table(), widths)):
+    exon_table = get_exon_table()
+    n_exons = len(exon_table)
+    segments, _ = draw_transcript_color_band(
+        ax, exon_table, exon_x, widths, EXON_ROW_Y, ROW_H,
+    )
+    for i, (e, w) in enumerate(zip(exon_table, widths)):
         x0 = exon_x[e["n"]][0]
         bump_depth = calculate_bump_depth(w * EXON_H, EXON_H) * (ROW_H / EXON_H)
-        add_exon_patch(
+        add_exon_outline(
             ax, x0, w, EXON_ROW_Y, ROW_H,
             e["five_prime"], e["three_prime"], e["parts"],
             bump_depth=bump_depth,
+            extend_right_bump=(i < n_exons - 1),
+            segments=segments,
+            exon_index=i,
+            n_exons=n_exons,
+            exon_n=e["n"],
         )
         fs = (7 if w >= 0.7 else 6) * FONT_SCALE / 1.2
         ax.text(
@@ -183,32 +200,16 @@ def _draw_transcript(ax: plt.Axes, widths: list[float], exon_x: dict[int, tuple[
         )
 
 
-def _draw_domains(
-    ax: plt.Axes,
-    exon_x: dict[int, tuple[float, float]],
-) -> list[ResolvedDomain]:
-    ax.text(
-        LEFT_MARGIN - 0.3, DOMAIN_ROW_Y + ROW_H / 2, "Domain \u2192",
-        ha="right", va="center", fontsize=9 * FONT_SCALE / 1.1, fontweight="bold",
-    )
-    resolved = resolve_domains(
-        get_domain_map(), get_exon_table(), exon_x, gap=DOMAIN_GAP_DATA,
-    )
-    for domain in resolved:
-        _draw_domain_box_mpl(ax, domain)
-    return resolved
-
-
 def _draw_hinge_guides(
     ax: plt.Axes,
     exon_x: dict[int, tuple[float, float]],
     y_bottom: float,
 ) -> None:
-    y_top = EXON_ROW_Y
+    y_top = DOMAIN_ROW_Y + ROW_H
     for xg in hinge_guide_x_positions(get_domain_map(), get_exon_table(), exon_x):
         ax.plot(
             [xg, xg], [y_top, y_bottom],
-            linestyle=":", color="#888", lw=0.9, zorder=1,
+            linestyle=(0, (5, 4)), color="#666", lw=1.2, zorder=20,
         )
 
 
@@ -239,7 +240,9 @@ def _draw_mutation_row(
     *,
     bar_style: str,
 ) -> None:
-    _, _, px0, px1, mx0, mx1, cx0, cx1 = _table_columns()
+    gx0, gx1, px0, px1, mx0, mx1, cx0, cx1 = _table_columns()
+    table_right = cx1
+    track_left = LEFT_MARGIN
 
     pid = str(row.get("id", ""))
     kda = row.get("expected_protein_size_kda", "")
@@ -274,6 +277,16 @@ def _draw_mutation_row(
             ha="center", va="center", fontsize=7.5 * FONT_SCALE / 1.1, fontweight="bold",
         )
 
+    transcript_right = exon_x[N_EXONS][1]
+    ax.add_patch(mpatches.Rectangle(
+        (table_right, y - PATIENT_ROW_H), track_left - table_right, PATIENT_ROW_H,
+        facecolor="white", edgecolor="none", zorder=1,
+    ))
+    ax.add_patch(mpatches.Rectangle(
+        (track_left, y - PATIENT_ROW_H), transcript_right - track_left, PATIENT_ROW_H,
+        facecolor="white", edgecolor="none", zorder=1,
+    ))
+
     rng = exon_range_from_row(row)
     if not rng:
         return
@@ -281,27 +294,16 @@ def _draw_mutation_row(
     x0b, x1b = exon_x[first][0], exon_x[last][1]
     label = _bar_label(row)
 
-    if first == last:
-        ax.add_patch(mpatches.Rectangle(
-            (x0b, y - PATIENT_ROW_H + 0.08), x1b - x0b, PATIENT_ROW_H - 0.16,
-            facecolor=STYLE_FACE["point"], edgecolor="black", lw=0.8, zorder=3,
-        ))
-    else:
-        face = STYLE_FACE[bar_style]
-        tc = "white" if bar_style == "black" else "black"
-        ax.add_patch(mpatches.Rectangle(
-            (x0b, y - PATIENT_ROW_H + 0.05), x1b - x0b, PATIENT_ROW_H - 0.10,
-            facecolor=face, edgecolor="black", lw=0.8, zorder=3,
-        ))
-        ax.text(
-            (x0b + x1b) / 2, y - PATIENT_ROW_H / 2, label,
-            ha="center", va="center", fontsize=7 * FONT_SCALE / 1.1, color=tc, fontweight="bold", zorder=4,
-        )
-        return
-
+    bx, by, bw, bh = _mutation_bar_box(x0b, x1b, y)
+    face = STYLE_FACE[bar_style]
+    tc = "white" if bar_style == "black" else "black"
+    ax.add_patch(mpatches.Rectangle(
+        (bx, by), bw, bh,
+        facecolor=face, edgecolor="black", lw=0.8, zorder=3,
+    ))
     ax.text(
         (x0b + x1b) / 2, y - PATIENT_ROW_H / 2, label,
-        ha="center", va="center", fontsize=7 * FONT_SCALE / 1.1, fontweight="bold", zorder=4,
+        ha="center", va="center", fontsize=7 * FONT_SCALE / 1.1, color=tc, fontweight="bold", zorder=4,
     )
 
 
@@ -324,7 +326,7 @@ def _draw_group_column(
     for grp, (ytop, ybot) in group_bounds.items():
         ax.add_patch(mpatches.Rectangle(
             (gx0, ybot), gx1 - gx0, ytop - ybot,
-            facecolor="#d9d9d9", edgecolor="black", lw=1.0, zorder=2,
+            facecolor="white", edgecolor="black", lw=1.0, zorder=2,
         ))
         ax.text(
             (gx0 + gx1) / 2, (ytop + ybot) / 2, grp,
@@ -391,7 +393,11 @@ def create_cohort_mutation_map(
 
     _draw_transcript(ax, widths, exon_x)
     resolved_domains = _draw_domains(ax, exon_x)
-    _draw_hinge_guides(ax, exon_x, table_bottom_y)
+    ax.plot(
+        [LEFT_MARGIN, LEFT_MARGIN],
+        [DOMAIN_ROW_Y, EXON_ROW_Y + ROW_H],
+        color="black", lw=1.2, zorder=6,
+    )
     if SHOW_ALIGNMENT_GUIDES:
         _draw_alignment_guides_mpl(ax, resolved_domains, EXON_ROW_Y, table_bottom_y)
 
@@ -410,11 +416,18 @@ def create_cohort_mutation_map(
 
         header_y = TABLE_TOP_Y + 0.05
         header_h = 0.9
+        table_x0 = _table_columns()[0]
         _, _, _, _, _, _, cx0, cx1 = _table_columns()
+        table_bottom_y_rows = TABLE_TOP_Y - len(rows) * ROW_STEP
         ax.add_patch(mpatches.Rectangle(
-            (table_x0, table_bottom_y), cx1 - table_x0, (header_y + header_h) - table_bottom_y,
+            (table_x0, table_bottom_y_rows), cx1 - table_x0, (header_y + header_h) - table_bottom_y_rows,
             facecolor="none", edgecolor="black", lw=1.6, zorder=6,
         ))
+        ax.plot(
+            [LEFT_MARGIN, LEFT_MARGIN],
+            [DOMAIN_ROW_Y, table_bottom_y_rows],
+            color="black", lw=1.2, zorder=6,
+        )
         _draw_phenotype_boxes(ax, group_bounds, transcript_right)
     else:
         ax.text(
@@ -422,6 +435,8 @@ def create_cohort_mutation_map(
             "Select mutations below and click Plot selected on map",
             ha="center", fontsize=10, color="#666",
         )
+
+    _draw_hinge_guides(ax, exon_x, table_bottom_y)
 
     ax.set_title(title, fontsize=12 * FONT_SCALE / 1.1, fontweight="bold", pad=10)
     fig.subplots_adjust(left=0.02, right=0.99, top=0.94, bottom=0.04)
