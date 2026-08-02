@@ -216,4 +216,20 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+<<<<<<< Updated upstream
 archive/
+=======
+
+# Python-generated files
+__pycache__/
+*.py[cod]
+
+# Test cache
+.pytest_cache/
+
+# Matplotlib cache
+.mplconfig/
+
+# Generated previews and outputs
+cursor_ai/outputs/
+>>>>>>> Stashed changes

@@ -1,0 +1,102 @@
+ID,Mutation,Predicted_Frame,Frame_Check,Skip_1,Skip_1_Exons_Skipped,Skip_2,Skip_2_Exons_Skipped,Skip_3,Skip_3_Exons_Skipped,Notes
+MS003,Exonic/Deletion e5 (orig frame: IF),in,match,e5,1,e4-e5,2,e3-e5,3,Already in-frame at native boundaries - no skip needed
+MS004,Exonic/Deletion e1-e7 (orig frame: OOF),N/A,not modeled,,,,,,,Not amenable to exon skipping - involves exon 1 (contains start codon; no transcript remains to skip)
+MS005,Exonic/Duplication e55-e63 (orig frame: OOF),out,match,e53-e63,11,e55-e65,11,e53-e64,12,
+MS006,Exonic/Duplication e21 (orig frame: OOF),out,match,e20-e21,2,e21-e22,2,e21-e23,3,
+MS010,Exonic/Duplication e18 (orig frame: OOF),out,match,e17-e18,2,e16-e18,3,e15-e18,4,
+MS011,Exonic/Deletion e3-e5 (orig frame: IF),in,match,e3-e5,3,e2-e7,6,e3-e8,6,Already in-frame at native boundaries - no skip needed
+MS012,Exonic/Deletion e3-e5 (orig frame: IF),in,match,e3-e5,3,e2-e7,6,e3-e8,6,Already in-frame at native boundaries - no skip needed
+MS013,Subexonic/Nonsense e69 (orig frame: OOF),out,match,e68-e69,2,e69-e70,2,e69-e71,3,
+MS014,Exonic/Duplication e46-e47 (orig frame: OOF),out,match,e45-e47,3,e45-e48,4,e43-e47,5,
+MS016,Exonic/Duplication e12 (orig frame: OOF),out,match,e11-e12,2,e10-e12,3,e11-e13,3,
+MS017,Subexonic/Nonsense e28 (orig frame: OOF),in,MISMATCH,e28,1,e27-e28,2,e28-e29,2,Already in-frame at native boundaries - no skip needed
+MS018,Subexonic/Nonsense e28 (orig frame: OOF),in,MISMATCH,e28,1,e27-e28,2,e28-e29,2,Already in-frame at native boundaries - no skip needed
+MS020,Subexonic/Nonsense e41 (orig frame: OOF),in,MISMATCH,e41,1,e40-e41,2,e41-e42,2,Already in-frame at native boundaries - no skip needed
+MS025,Subexonic/Nonsense e21 (orig frame: OOF),out,match,e20-e21,2,e21-e22,2,e21-e23,3,
+MS026,Exonic/Duplication e21 (orig frame: OOF),out,match,e20-e21,2,e21-e22,2,e21-e23,3,
+MS027,Exonic/Duplication e2 (orig frame: OOF),out,match,e2-e7,6,e2-e19,18,e2-e21,20,
+MS028,Subexonic/Nonsense e57 (orig frame: OOF),out,match,e56-e57,2,e54-e57,4,e56-e59,4,
+MS029,Exonic/Duplication e8-e11 (orig frame: OOF),out,match,e7-e11,5,e6-e12,7,e5-e12,8,
+MS031,Exonic/Duplication e8-e13 (orig frame: OOF),out,match,e6-e13,8,e5-e13,9,e6-e14,9,
+MS032,Subexonic/Splice i11 (orig frame: OOF),out,match,e11-e12,2,e10-e12,3,e11-e13,3,Intronic/junctional breakpoint - exon bounds are approximate
+MS035,Exonic/Duplication e44 (orig frame: OOF),out,match,e43-e44,2,e44-e45,2,e42-e44,3,
+MS036,Exonic/Duplication e44-e51 (orig frame: OOF),out,match,e43-e51,9,e42-e51,10,e41-e51,11,
+MS037,Exonic/Duplication e42-e43 (orig frame: OOF),out,match,e42-e44,3,e41-e44,4,e40-e44,5,
+MS040,Exonic/Duplication e3-e4 (orig frame: IF),in,match,e3-e4,2,e3-e5,3,e2-e7,6,Already in-frame at native boundaries - no skip needed
+MS044,Exonic/Duplication e2-e19 (orig frame: IF),in,match,e2-e19,18,e2-e21,20,e2-e50,49,Already in-frame at native boundaries - no skip needed
+MS045,Subexonic/Nonsense e57 (orig frame: OOF),out,match,e56-e57,2,e54-e57,4,e56-e59,4,
+MS047,Exonic/Duplication e43 (orig frame: OOF),out,match,e43-e44,2,e42-e44,3,e41-e44,4,
+MS048,Exonic/Deletion e45-e79 (orig frame: N/A),N/A,not modeled,,,,,,,"No candidates - exon range not present in DMD_light.csv - data gap, review manually"
+MS049,Exonic/Duplication e2 (orig frame: OOF),out,match,e2-e7,6,e2-e19,18,e2-e21,20,
+MS051,Subexonic/Nonsense e68 (orig frame: OOF),out,match,e68-e69,2,e66-e68,3,e66-e70,5,
+MS505,/ e68 (orig frame: OOF),out,match,e68-e69,2,e66-e68,3,e66-e70,5,
+MS054,Exonic/Duplication e3-e20 (orig frame: IF),in,match,e3-e20,18,e2-e21,20,e3-e22,20,Already in-frame at native boundaries - no skip needed
+MS057,Exonic/Deletion e51 (orig frame: OOF),out,match,e50-e51,2,e51-e52,2,e49-e51,3,
+MS058,Exonic/Deletion e5-e7 (orig frame: OOF),out,match,e5-e8,4,e4-e8,5,e5-e9,5,
+MS059,Exonic/Duplication e2 (orig frame: OOF),out,match,e2-e7,6,e2-e19,18,e2-e21,20,
+MS061,Exonic/Deletion e3 (orig frame: IF),in,match,e3,1,e3-e4,2,e3-e5,3,Already in-frame at native boundaries - no skip needed
+MS069,Exonic/Duplication e53-e57 (orig frame: OOF),out,match,e52-e57,6,e53-e58,6,e50-e57,8,
+MS070,Exonic/Duplication e53-e57 (orig frame: OOF),out,match,e52-e57,6,e53-e58,6,e50-e57,8,
+MS075,Exonic/Duplication e2-e7 (orig frame: IF),in,match,e2-e7,6,e2-e19,18,e2-e21,20,Already in-frame at native boundaries - no skip needed
+MS079,Exonic/Duplication e19 (orig frame: OOF),out,match,e19-e20,2,e17-e20,4,e19-e22,4,
+MS081,Subexonic/Deletion e57 (orig frame: OOF),out,match,e56-e57,2,e54-e57,4,e56-e59,4,
+MS085,Exonic/Duplication e3-e7 (orig frame: OOF),out,match,e2-e7,6,e3-e8,6,e3-e9,7,
+MS087,Subexonic/Exon/Intron Junctional Deletion e45-ei45 (orig frame: IF),out,MISMATCH,e44-e45,2,e45-e46,2,e45-e47,3,Intronic/junctional breakpoint - exon bounds are approximate
+MS092,Intronic/Pseudoexon i47 (orig frame: IF),in,match,e47,1,e47-e48,2,e45-e47,3,Intronic/junctional breakpoint - exon bounds are approximate; Already in-frame at native boundaries - no skip needed
+MS095,Exonic/Duplication e44 (orig frame: OOF),out,match,e43-e44,2,e44-e45,2,e42-e44,3,
+MS096,Exonic/Duplication e45 (orig frame: OOF),out,match,e44-e45,2,e45-e46,2,e45-e47,3,
+MS097,Exonic/Duplication e53 (orig frame: OOF),out,match,e52-e53,2,e50-e53,4,e52-e55,4,
+MS098,Exonic/Duplication e20 (orig frame: OOF),out,match,e19-e20,2,e20-e21,2,e17-e20,4,
+MS099,Exonic/Duplication e5-e7 (orig frame: OOF),out,match,e5-e8,4,e4-e8,5,e5-e9,5,
+MS101,Exonic/Duplication e46 (orig frame: OOF),out,match,e45-e46,2,e45-e47,3,e43-e46,4,
+MS103,Subexonic/Nonsense e42 (orig frame: OOF),in,MISMATCH,e42,1,e41-e42,2,e40-e42,3,Already in-frame at native boundaries - no skip needed
+MS104,Exonic/Deletion e55 (orig frame: OOF),out,match,e54-e55,2,e55-e56,2,e52-e55,4,
+MS110,Exonic/Deletion e45 (orig frame: OOF),out,match,e44-e45,2,e45-e46,2,e45-e47,3,
+MS111,Exonic/Deletion e5 (orig frame: IF),in,match,e5,1,e4-e5,2,e3-e5,3,Already in-frame at native boundaries - no skip needed
+MS114,Subexonic/Splice i19 (orig frame: OOF),out,match,e19-e20,2,e17-e20,4,e19-e22,4,Intronic/junctional breakpoint - exon bounds are approximate
+MS115,Intronic/Pseudoexon i17 (orig frame: OOF),out,match,e17-e18,2,e16-e18,3,e15-e18,4,Intronic/junctional breakpoint - exon bounds are approximate
+MS116,Exonic/Duplication e2 (orig frame: OOF),out,match,e2-e7,6,e2-e19,18,e2-e21,20,
+MS117,Exonic/Duplication e12-e13 (orig frame: OOF),out,match,e11-e13,3,e10-e13,4,e11-e14,4,
+MS120,Exonic/Duplication e8-e9 (orig frame: OOF),out,match,e6-e9,4,e5-e9,5,e6-e10,5,
+MS123,Exonic/Deletion e45-e47 (orig frame: IF),in,match,e45-e47,3,e45-e48,4,e43-e47,5,Already in-frame at native boundaries - no skip needed
+MS124,Exonic/Deletion e44 (orig frame: OOF),out,match,e43-e44,2,e44-e45,2,e42-e44,3,
+MS128,Exonic/Duplication e3-e43 (orig frame: OOF),out,match,e3-e44,42,e3-e46,44,e3-e47,45,
+MS129,Exonic/Deletion e45 (orig frame: OOF),out,match,e44-e45,2,e45-e46,2,e45-e47,3,
+MS130,Exonic/Deletion e45 (orig frame: OOF),out,match,e44-e45,2,e45-e46,2,e45-e47,3,
+MS131,Exonic/Duplication e2-e6 (orig frame: OOF),out,match,e2-e7,6,e2-e19,18,e2-e21,20,
+MS133,Exonic/Duplication e50-e60 (orig frame: IF),in,match,e50-e60,11,e49-e60,12,e48-e60,13,Already in-frame at native boundaries - no skip needed
+MS134,Exonic/Deletion e3-e48 (orig frame: IF),in,match,e3-e48,46,e3-e49,47,e2-e50,49,Already in-frame at native boundaries - no skip needed
+MS137,Subexonic/Nonsense e33 (orig frame: OOF),in,MISMATCH,e33,1,e32-e33,2,e33-e34,2,Already in-frame at native boundaries - no skip needed
+MS139,Subexonic/Nonsense e59 (orig frame: OOF),out,match,e58-e59,2,e58-e60,3,e59-e61,3,
+MS140,Subexonic/Deletion e5 (orig frame: (blank)),in,orig frame unclear,e5,1,e4-e5,2,e3-e5,3,Already in-frame at native boundaries - no skip needed
+MS141,Exonic/Deletion e51-e55 (orig frame: OOF),out,match,e50-e55,6,e49-e55,7,e48-e55,8,
+MS142,Exonic/Duplication e3-e4 (orig frame: IF),in,match,e3-e4,2,e3-e5,3,e2-e7,6,Already in-frame at native boundaries - no skip needed
+MS143,Subexonic/Nonsense e24 (orig frame: OOF),in,MISMATCH,e24,1,e23-e24,2,e24-e25,2,Already in-frame at native boundaries - no skip needed
+MS144,Exonic/Deletion e45-e56 (orig frame: OOF),out,match,e44-e56,13,e45-e57,13,e43-e57,15,
+MS145,Exonic/Deletion e44 (orig frame: OOF),out,match,e43-e44,2,e44-e45,2,e42-e44,3,
+MS146,Subexonic/Splice i62 (orig frame: Unk),out,orig frame unclear,e62-e63,2,e62-e64,3,e59-e63,5,Intronic/junctional breakpoint - exon bounds are approximate
+MS147,Exonic/Duplication e2 (orig frame: OOF),out,match,e2-e7,6,e2-e19,18,e2-e21,20,
+MS148,Subexonic/Nonsense e1 (orig frame: OOF),N/A,not modeled,,,,,,,Not amenable to exon skipping - involves exon 1 (contains start codon; no transcript remains to skip)
+MS149,Exonic/Deletion e3-e7 (orig frame: OOF),out,match,e2-e7,6,e3-e8,6,e3-e9,7,
+MS150,Exonic/Deletion e5 (orig frame: IF),in,match,e5,1,e4-e5,2,e3-e5,3,Already in-frame at native boundaries - no skip needed
+MS151,Exonic/Duplication e2 (orig frame: OOF),out,match,e2-e7,6,e2-e19,18,e2-e21,20,
+MS157,Exonic/Deletion e18-e41 (orig frame: OOF),out,match,e17-e41,25,e16-e41,26,e17-e42,26,
+MS158,Exonic/Deletion e61-e63 (orig frame: OOF),out,match,e59-e63,5,e59-e64,6,e61-e67,7,
+MS159,Subexonic/Nonsense e31 (orig frame: OOF),in,MISMATCH,e31,1,e30-e31,2,e31-e32,2,Already in-frame at native boundaries - no skip needed
+MS160,Subexonic/Frameshift e33 (orig frame: OOF),in,MISMATCH,e33,1,e32-e33,2,e33-e34,2,Already in-frame at native boundaries - no skip needed
+MS162,Exonic/Deletion e13-e18 (orig frame: IF),in,match,e13-e18,6,e11-e18,8,e13-e20,8,Already in-frame at native boundaries - no skip needed
+MS163,Exonic/Deletion e3-e29 (orig frame: IF),in,match,e3-e29,27,e3-e30,28,e3-e31,29,Already in-frame at native boundaries - no skip needed
+MS164,Exonic/Deletion e13-e36 (orig frame: IF),in,match,e13-e36,24,e13-e37,25,e11-e36,26,Already in-frame at native boundaries - no skip needed
+MS165,Subexonic/Splice i3 (orig frame: OOF),in,MISMATCH,e3,1,e3-e4,2,e3-e5,3,Intronic/junctional breakpoint - exon bounds are approximate; Already in-frame at native boundaries - no skip needed
+MS173,Subexonic/Nonsense e23 (orig frame: OOF),in,MISMATCH,e23,1,e23-e24,2,e21-e23,3,Already in-frame at native boundaries - no skip needed
+MS174,Exonic/Duplication e8-e11 (orig frame: OOF),out,match,e7-e11,5,e6-e12,7,e5-e12,8,
+MS177,Exonic/Duplication e8-e13 (orig frame: OOF),out,match,e6-e13,8,e5-e13,9,e6-e14,9,
+MS179,Exonic/Deletion e1 (orig frame: OOF),N/A,not modeled,,,,,,,Not amenable to exon skipping - involves exon 1 (contains start codon; no transcript remains to skip)
+MS182,Exonic/Duplication e8-e23 (orig frame: OOF),out,match,e6-e23,18,e5-e23,19,e6-e24,19,
+MS185,Subexonic/Duplication e40 (orig frame: OOF),in,MISMATCH,e40,1,e39-e40,2,e40-e41,2,Already in-frame at native boundaries - no skip needed
+MS186,Exonic/Deletion e7 (orig frame: OOF),out,match,e6-e8,3,e5-e8,4,e6-e9,4,
+MS187,Exonic/Deletion e45-e54 (orig frame: OOF),out,match,e44-e54,11,e45-e55,11,e43-e55,13,
+MS189,Exonic/Duplication e10-e11 (orig frame: OOF),out,match,e10-e12,3,e9-e12,4,e10-e13,4,
+MS192,Exonic/Deletion e2-e21 (orig frame: IF),in,match,e2-e21,20,e2-e50,49,e2-e52,51,Already in-frame at native boundaries - no skip needed
+MS194,Intronic/Pseudoexon i18 (orig frame: OOF),out,match,e17-e18,2,e16-e18,3,e15-e18,4,Intronic/junctional breakpoint - exon bounds are approximate
+MS196,Subexonic/Exon/Intron Junctional Deletion i7-e8 (orig frame: OOF),out,match,e6-e8,3,e5-e8,4,e6-e9,4,Intronic/junctional breakpoint - exon bounds are approximate
