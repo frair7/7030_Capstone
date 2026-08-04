@@ -172,6 +172,44 @@ class SkipCandidate:
     estimated_remaining_coding_bp: int
     estimated_protein_aa: int
     evidence_class: SkipEvidence
-    rank_score: tuple[int, int, int]  # fewer skips, fewer bp, contiguous bonus
+    rank_score: tuple[int, ...]
+    all_removed_exons: list[int] = field(default_factory=list)
+    retained_exons: list[int] = field(default_factory=list)
+    new_junctions: list[tuple[int, int]] = field(default_factory=list)
+    mutation_boundary_junction: Optional[tuple[int, int]] = None
+    is_boundary_adjacent: bool = True
+    is_structurally_valid: bool = True
+    is_advanced_noncontiguous: bool = False
+    skip_block_count: int = 1
+    upstream_extension_count: int = 0
+    downstream_extension_count: int = 0
+    principal_junction: Optional[tuple[int, int]] = None
     assumptions: list[str] = field(default_factory=list)
     affected_domains: list[str] = field(default_factory=list)
+
+    @property
+    def original_mutation_exons(self) -> list[int]:
+        return self.deleted_exons
+
+    @property
+    def additional_exon_count(self) -> int:
+        return len(self.additional_skipped_exons)
+
+    @property
+    def principal_rescue_junction(self) -> str:
+        pj = self.principal_junction
+        if pj:
+            return f"exon {pj[0]}|{pj[1]}"
+        if self.final_upstream_exon and self.final_downstream_exon:
+            return f"exon {self.final_upstream_exon}|{self.final_downstream_exon}"
+        return ""
+
+    def junction_display(self) -> str:
+        """Format novel junctions for tables and UI."""
+        if not self.new_junctions:
+            if self.final_upstream_exon and self.final_downstream_exon:
+                return f"exon {self.final_upstream_exon}|{self.final_downstream_exon}"
+            return ""
+        return "; ".join(
+            f"exon {up}|{down}" for up, down in self.new_junctions
+        )

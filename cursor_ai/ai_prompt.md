@@ -43,7 +43,7 @@ Dependencies: streamlit, pandas, numpy, plotly, matplotlib, biopython, pytest, p
 ## App pages
 
 1. **Mutation Explorer** (`pages/1_Mutation_Explorer.py`) — primary focus; catalog intake, filters, interactive SVG cohort map
-2. Exon Skipping Analysis
+2. **Exon Skipping Analysis** (`pages/3_Exon_Skipping_Analysis.py`) — two tabs: Model by exon target, Model by mutation
 3. Reference Map
 4. Methods and Limitations
 
@@ -121,6 +121,74 @@ Rendered via `components.html` with fixed pixel SVG dimensions and horizontal sc
 | 61 | R24 → H4 |
 | 64 | H4 → CR Domain |
 
+## Exon skipping analysis (critical architecture)
+
+### Model by mutation tab
+
+Uses the mutation-specific engine in `src/exon_skipping_analysis.py`:
+
+- `rank_skip_candidates_for_row()` builds the correct deletion or duplication model
+- It calls `find_frame_restoring_candidates()` and returns the top three
+- `_legacy_candidate_from_analysis()` adapts results for the existing schematic UI
+- Never send duplications through deletion-oriented `find_skip_candidates()`
+
+### Model by exon target tab (mutation-specific simulation)
+
+Uses **`src/exon_skipping_analysis.py`** — authoritative for candidate generation and target-exon filtering:
+
+```
+Mutation → generate adjacent candidate sets → evaluate coding delta →
+discard non-restoring → rank → apply single/multi filter → apply target-exon filter → display
+```
+
+**Core rule:** The selected target exon is a **display filter only**. Never use it to decide whether a mutation is frame-restoring.
+
+**Frame math (coding bp only, from `dmd_exons_grch38.csv`):**
+
+```
+Deletion:  mutation_delta = -(deleted coding bases)
+Duplication: mutation_delta = +(duplicated coding bases)
+For each skip set: final_delta = mutation_delta - sum(skipped coding bases)
+Frame restored when: final_delta % 3 == 0
+```
+
+**Candidate generation rules:**
+
+| Mutation class | Rules |
+|----------------|-------|
+| Deletion | Deleted exons cannot be skip targets. Generate contiguous upstream/downstream blocks bordering the deletion. Nonconsecutive exon numbers allowed across a deletion (e.g. del7 → skip 6,8). |
+| Duplication | Duplicated interval is the base skip target. Extend with contiguous upstream/downstream blocks. |
+
+`candidate_is_allowed()` enforces these rules even for directly evaluated
+skip sets. In particular, duplication e3–e7 must reject skip 8–9 because the
+candidate omits exons 3–7. Deletion e3–e7 may retain skip 8–9 only after its
+coding delta passes modulo 3.
+
+**Catalog bridge:** `analyze_mutations_for_skip_target()` in `src/exon_skipping_catalog.py` calls `find_frame_restoring_candidates()` per mutation, then `filter_candidates_by_target_exons()`.
+
+**Target-results table:** Keep the participant `ID` separate from the mutation
+label. Preserve each candidate's rank from the complete pre-filter candidate
+list and display it as `Skip combination N`, alongside the full `Exons skipped`
+set. Target filtering must not renumber the underlying mutation-specific rank.
+
+**Validated examples (see `tests/test_exon_skipping_analysis.py`):**
+
+| Mutation | Expected candidates |
+|----------|---------------------|
+| Dup exon 2 | Skip exon 2 (single) |
+| Dup exons 3–4 | Skip 3,4 / 3,4,5 / 3,4,5,6,7,8 (no single-exon) |
+| Del exon 7 | Skip 6,8 / 6,8,9 / 5,6,8 / 2,3,4,5,6 (no exon 7 in targets) |
+| Del exon 45 | Skip exon 44 (single) |
+| Del exons 3–7 + target exon 45 | Must NOT appear |
+
+**Do not:**
+
+- Filter mutations by whether they overlap a target exon range
+- Default silently to exon 45 in the target tab UI
+- Use `reconstruct_deletion_skip()` with user target exons as the skip set in `analyze_mutations_for_skip_target()`
+- Use deletion-oriented candidate generation for a duplication
+- Patch target-exon filtering without replacing the underlying mutation-specific candidate generation
+
 ## Testing
 
 ```bash
@@ -130,7 +198,13 @@ export MPLCONFIGDIR=cursor_ai/.mplconfig
 PYTHONPATH=. pytest -q
 ```
 
-Last known: **82 tests passing**.
+Last known: **154 tests passing** (includes `tests/test_exon_skipping_analysis.py`).
+
+Exon-skipping regression tests:
+
+```bash
+PYTHONPATH=. pytest tests/test_exon_skipping_analysis.py tests/test_exon_skipping_catalog.py tests/test_skip_candidate_filtering.py -q
+```
 
 ## Git / workflow notes
 
@@ -160,4 +234,26 @@ rows = load_catalog().head(3).to_dict('records')
 open('outputs/map_preview.html','w').write(build_interactive_map_html(rows))
 print('Wrote outputs/map_preview.html')
 "
+```
+
+## Cursor handoff prompt (exon skipping — Model by Exon Target)
+
+Paste when fixing or extending target-exon analysis:
+
+```
+Inspect: pages/3_Exon_Skipping_Analysis.py, src/exon_skipping_analysis.py,
+src/exon_skipping_catalog.py (analyze_mutations_for_skip_target), data/dmd_exons_grch38.csv.
+
+CORE RULE: Selected target exon is a DISPLAY FILTER only. For each mutation independently:
+  mutation_delta = ± sum(coding lengths of affected exons)
+  final_delta = mutation_delta - sum(coding lengths of skipped exons)
+  Frame restored when final_delta % 3 == 0
+
+Deletion candidates: contiguous upstream/downstream blocks; deleted exons cannot be targets.
+Duplication candidates: duplicated interval required; extend upstream/downstream.
+Rank by fewest targets, then fewest additional coding bases removed.
+
+Do NOT filter mutations by overlap with target exon. Do NOT default to exon 45.
+Run: pytest tests/test_exon_skipping_analysis.py -v
+Validate: dup2→skip2, dup3-4→no single, del7→6,8 etc, del45→skip44, del3-7≠target45.
 ```

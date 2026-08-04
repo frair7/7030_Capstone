@@ -6,12 +6,14 @@ from __future__ import annotations
 
 import csv
 import re
+import uuid
 from pathlib import Path
 from typing import Any, Optional
 
 import pandas as pd
 
 from src.config import REFERENCE
+from src.mutation_viz import sort_catalog_dataframe
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 CATALOG_CSV = DATA_DIR / "mutation_catalog.csv"
@@ -20,6 +22,7 @@ PARENT_CATALOG = (
 )
 
 CATALOG_COLUMNS = [
+    "mutation_record_id",
     "id",
     "mutation_class",
     "mutation_subclass",
@@ -38,9 +41,56 @@ CATALOG_COLUMNS = [
     "experimental_research_category",
     "tissue_category_comments",
     "general_comments",
+    "is_deleted",
+    "deleted_at",
+    "deleted_by",
+    "deletion_reason",
 ]
 
-DISPLAY_COLUMNS = ["selected"] + CATALOG_COLUMNS
+DISPLAY_COLUMNS = (
+    ["selected", "delete_row"]
+    + [c for c in CATALOG_COLUMNS if c != "mutation_record_id"]
+    + ["mutation_record_id"]
+)
+
+EXPLORER_DISPLAY_COLUMNS = [
+    "selected",
+    "id",
+    "mutation_class",
+    "mutation_subclass",
+    "start_region",
+    "stop_region",
+    "frame",
+    "phenotype",
+    "group",
+    "mutation_record_id",
+]
+
+CATALOG_EDITOR_COLUMNS = (
+    ["delete_row"]
+    + [c for c in CATALOG_COLUMNS if c != "mutation_record_id"]
+    + ["mutation_record_id"]
+)
+
+
+def new_mutation_record_id() -> str:
+    return str(uuid.uuid4())
+
+
+def _ensure_schema(df: pd.DataFrame) -> tuple[pd.DataFrame, bool]:
+    """Add missing columns and assign mutation_record_id where absent."""
+    out = df.copy()
+    changed = False
+    for col in CATALOG_COLUMNS:
+        if col not in out.columns:
+            out[col] = ""
+            changed = True
+    out = out[CATALOG_COLUMNS].fillna("").astype(str)
+    for idx in out.index:
+        if not str(out.at[idx, "mutation_record_id"]).strip():
+            out.at[idx, "mutation_record_id"] = new_mutation_record_id()
+            changed = True
+    return out, changed
 
 
 def _normalize_frame(raw: str) -> str:
@@ -95,6 +145,7 @@ def import_legacy_catalog(path: Optional[Path] = None) -> pd.DataFrame:
             start_r, stop_r = _split_legacy_region(region)
             rows.append(
                 {
+                    "mutation_record_id": new_mutation_record_id(),
                     "id": row.get("Psuedo", row.get("Pseudo", "")).strip(),
                     "mutation_class": (row.get("Mutation Class") or "").strip(),
                     "mutation_subclass": (row.get("Mutation Subclass") or "").strip(),
@@ -111,6 +162,10 @@ def import_legacy_catalog(path: Optional[Path] = None) -> pd.DataFrame:
                     "experimental_research_category": "",
                     "tissue_category_comments": "",
                     "general_comments": "",
+                    "is_deleted": "",
+                    "deleted_at": "",
+                    "deleted_by": "",
+                    "deletion_reason": "",
                 }
             )
     return pd.DataFrame(rows, columns=CATALOG_COLUMNS)
@@ -124,10 +179,10 @@ def load_catalog(path: Optional[Path] = None) -> pd.DataFrame:
         save_catalog(df, csv_path)
         return df
     df = pd.read_csv(csv_path, dtype=str).fillna("")
-    for col in CATALOG_COLUMNS:
-        if col not in df.columns:
-            df[col] = ""
-    return df[CATALOG_COLUMNS]
+    df, changed = _ensure_schema(df)
+    if changed:
+        save_catalog(df, csv_path)
+    return df
 
 
 def save_catalog(df: pd.DataFrame, path: Optional[Path] = None) -> None:
@@ -151,6 +206,18 @@ def next_id(df: pd.DataFrame) -> str:
     return f"S{n}"
 
 
+def ensure_record_ids(df: pd.DataFrame) -> tuple[pd.DataFrame, bool]:
+    return _ensure_schema(df)
+
+
+def active_catalog(df: pd.DataFrame) -> pd.DataFrame:
+    """Return non-soft-deleted rows."""
+    if "is_deleted" not in df.columns:
+        return df.copy()
+    deleted = df["is_deleted"].astype(str).str.strip().str.lower().isin(["true", "1", "yes"])
+    return df[~deleted].reset_index(drop=True)
+
+
 def filter_catalog(
     df: pd.DataFrame,
     *,
@@ -160,7 +227,7 @@ def filter_catalog(
     search_text: str = "",
 ) -> pd.DataFrame:
     """Apply filters to the catalog table."""
-    out = df.copy()
+    out = active_catalog(df.copy())
     if mutation_classes:
         out = out[out["mutation_class"].isin(mutation_classes)]
     if mutation_subclasses:
@@ -174,11 +241,28 @@ def filter_catalog(
             axis=1,
         )
         out = out[mask]
-    return out.reset_index(drop=True)
+    return sort_catalog_dataframe(out)
 
 
 def catalog_for_display(df: pd.DataFrame) -> pd.DataFrame:
-    """Add selected checkbox column for the data editor."""
+    """Add selection columns for the data editor (legacy combined view)."""
     display = df.copy()
     display.insert(0, "selected", False)
+    display.insert(1, "delete_row", False)
     return display[DISPLAY_COLUMNS]
+
+
+def catalog_for_plot_selection(df: pd.DataFrame) -> pd.DataFrame:
+    """Add Plot checkbox column for Mutation Explorer selection table."""
+    display = df.copy()
+    if "selected" not in display.columns:
+        display.insert(0, "selected", False)
+    return display[EXPLORER_DISPLAY_COLUMNS]
+
+
+def catalog_for_editor(df: pd.DataFrame) -> pd.DataFrame:
+    """Add delete checkbox column for Mutation Catalog editing table."""
+    display = df.copy()
+    if "delete_row" not in display.columns:
+        display.insert(0, "delete_row", False)
+    return display[CATALOG_EDITOR_COLUMNS]

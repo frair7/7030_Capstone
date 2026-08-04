@@ -8,6 +8,7 @@ import streamlit as st
 
 from src.config import REFERENCE
 from src.reference_data import EXONS_CSV
+from src.streamlit_theme import apply_widescreen_theme, render_nav_bar
 from src.ui_helpers import init_session_state, render_research_warning
 
 st.set_page_config(
@@ -18,8 +19,9 @@ st.set_page_config(
 )
 
 init_session_state()
+apply_widescreen_theme()
+render_nav_bar(page_title="DMD Mutation and Exon-Skipping Explorer")
 
-st.title("DMD Mutation and Exon-Skipping Explorer")
 st.markdown(
     """
     Locally hosted **research and educational** web application for exploring
@@ -40,10 +42,9 @@ with col1:
     st.subheader("Get started")
     st.markdown(
         """
-        1. Open **Mutation Explorer** in the sidebar
-        2. Choose an input mode and enter a variant (e.g. `del45-50`)
-        3. Click **Run analysis**
-        4. Explore the transcript map, frame result, and skip candidates
+        1. Open **Mutation Catalog** to add or edit mutation records
+        2. Open **Mutation Explorer** to visualize mutations on the transcript map
+        3. Use **Exon Skipping Analysis** for frame-restoration candidates
         """
     )
 with col2:
@@ -52,7 +53,8 @@ with col2:
         """
         | Page | Description |
         |------|-------------|
-        | **Mutation Explorer** | Main analysis workflow |
+        | **Mutation Explorer** | Interactive cohort mutation map |
+        | **Mutation Catalog** | Data entry, editing, import/export |
         | **Exon Skipping Analysis** | Candidate strategies in detail |
         | **Reference Map** | Full 79-exon reference table |
         | **Methods & Limitations** | Methods, provenance, disclaimers |

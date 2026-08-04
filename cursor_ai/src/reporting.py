@@ -11,6 +11,7 @@ from typing import Any, Optional
 import pandas as pd
 
 from src.config import REFERENCE
+from src.exon_skipping_catalog import format_exon_list
 from src.models import FrameResult, ParsedVariant, SkipCandidate
 from src.visualization import VisualizationState, build_exon_table
 
@@ -18,17 +19,18 @@ from src.visualization import VisualizationState, build_exon_table
 def skip_candidates_dataframe(
     candidates: list[SkipCandidate],
 ) -> pd.DataFrame:
-    """Tabular skip-candidate results."""
+    """Tabular skip-candidate results (frame-restoring candidates only)."""
     if not candidates:
         return pd.DataFrame(
             columns=[
+                "candidate",
                 "original_mutation",
                 "deleted_exons",
                 "additional_skipped_exons",
-                "final_junction",
+                "principal_rescue_junction",
+                "new_junctions",
                 "additional_bp_removed",
                 "total_bp_removed",
-                "restores_frame",
                 "estimated_protein_aa",
                 "evidence_class",
             ]
@@ -36,19 +38,18 @@ def skip_candidates_dataframe(
     return pd.DataFrame(
         [
             {
+                "candidate": f"Skip combo {i + 1}",
                 "original_mutation": c.original_mutation,
                 "deleted_exons": str(c.deleted_exons),
-                "additional_skipped_exons": str(c.additional_skipped_exons),
-                "final_junction": (
-                    f"exon {c.final_upstream_exon}|{c.final_downstream_exon}"
-                ),
+                "additional_skipped_exons": format_exon_list(c.additional_skipped_exons),
+                "principal_rescue_junction": c.principal_rescue_junction,
+                "new_junctions": c.junction_display(),
                 "additional_bp_removed": c.additional_coding_bases_removed,
                 "total_bp_removed": c.total_coding_bases_removed,
-                "restores_frame": c.restores_frame,
                 "estimated_protein_aa": c.estimated_protein_aa,
                 "evidence_class": c.evidence_class.value,
             }
-            for c in candidates
+            for i, c in enumerate(candidates)
         ]
     )
 
@@ -153,11 +154,14 @@ def build_text_report(
         for i, c in enumerate(skip_candidates, 1):
             lines.append(
                 f"  {i}. Additional skips {c.additional_skipped_exons} → "
-                f"junction {c.final_upstream_exon}|{c.final_downstream_exon} "
+                f"junction {c.principal_rescue_junction} "
                 f"(+{c.additional_coding_bases_removed} bp)"
             )
     else:
-        lines.append("  None found within search limits.")
+        lines.append(
+            "  No frame-restoring exon-skipping candidates were identified "
+            "within the selected search limit."
+        )
 
     lines.extend(
         [

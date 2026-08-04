@@ -13,10 +13,12 @@ import matplotlib.patches as mpatches
 from matplotlib.path import Path as MplPath
 from matplotlib.transforms import Bbox
 
+from src.exon_gradients import build_horizontal_gradient
 from src.part_segments import (
     PartSegment,
     build_part_segments,
     exon_draw_xrange,
+    part_border_color,
     segments_for_exon,
     segments_in_xrange,
 )
@@ -41,15 +43,6 @@ def draw_transcript_color_band(
     n_exons = len(exon_table)
     scale = height / EXON_H_REF
 
-    for seg in segments:
-        w = seg.x1 - seg.x0
-        if w <= 0:
-            continue
-        ax.add_patch(mpatches.Rectangle(
-            (seg.x0, y), w, height,
-            facecolor=seg.fill, edgecolor="none", zorder=zorder,
-        ))
-
     for i, (e, w) in enumerate(zip(exon_table, widths)):
         n = e["n"]
         x0, x1 = exon_x[n]
@@ -68,17 +61,35 @@ def draw_transcript_color_band(
         ax.add_patch(puzzle_clip)
         puzzle_clips.append(puzzle_clip)
 
-        for seg in segments_for_exon(segments, n):
-            ix0 = max(seg.x0, draw_x0)
-            ix1 = min(seg.x1, draw_x1)
-            if ix1 <= ix0:
-                continue
+        parts = e["parts"]
+        if len(parts) <= 1:
+            fill = parts[0][2] if parts else "#cccccc"
             clipped = mpatches.Rectangle(
-                (ix0, y), ix1 - ix0, height,
-                facecolor=seg.fill, edgecolor="none", zorder=zorder + 1,
+                (draw_x0, y), draw_x1 - draw_x0, height,
+                facecolor=fill, edgecolor="none", zorder=zorder + 1,
             )
             clipped.set_clip_path(puzzle_clip)
             ax.add_patch(clipped)
+        else:
+            rgba = build_horizontal_gradient(
+                parts,
+                n_samples=256,
+                fade_frac=0.12,
+                draw_x0=draw_x0,
+                draw_x1=draw_x1,
+                exon_x0=x0,
+                exon_x1=x1,
+            )
+            extent = [draw_x0, draw_x1, y, y + height]
+            im = ax.imshow(
+                rgba.reshape(1, -1, 4),
+                extent=extent,
+                origin="lower",
+                aspect="auto",
+                zorder=zorder + 1,
+                interpolation="bilinear",
+            )
+            im.set_clip_path(puzzle_clip)
 
     return segments, puzzle_clips
 
@@ -102,7 +113,6 @@ def add_exon_outline(
     exon_n: int | None = None,
 ) -> None:
     """Draw one transcript exon outline over the colour band."""
-    del parts  # colours come from global segments
     x0, x1 = x, x + width
     draw_x0, draw_x1 = exon_draw_xrange(
         exon_index, n_exons, x0, x1, bump_depth,
@@ -119,37 +129,14 @@ def add_exon_outline(
     if segments is None or exon_n is None:
         return
 
-    for seg in segments_for_exon(segments, exon_n):
-        px0 = max(seg.x0, draw_x0)
-        px1 = min(seg.x1, draw_x1)
-        if px1 <= px0:
-            continue
-        outline = mpatches.PathPatch(
-            outline_path,
-            facecolor="none",
-            edgecolor=seg.border,
-            lw=lw,
-            zorder=5,
-        )
-        outline.set_clip_path(puzzle_clip)
-        outline.set_clip_box(Bbox.from_bounds(px0, y - 0.01, px1 - px0, height + 0.02))
-        ax.add_patch(outline)
-
-    boundaries = {
-        segments[i].x1
-        for i in range(len(segments) - 1)
-        if abs(segments[i].x1 - segments[i + 1].x0) < 1e-6
-    }
-    for bx in boundaries:
-        if x0 < bx < draw_x1:
-            border = next(
-                (s.border for s in segments if abs(s.x1 - bx) < 1e-6),
-                "#333",
-            )
-            ax.plot(
-                [bx, bx], [y, y + height],
-                color=border, lw=0.9, zorder=6, alpha=0.8,
-            )
+    border = part_border_color(parts)
+    ax.add_patch(mpatches.PathPatch(
+        outline_path,
+        facecolor="none",
+        edgecolor=border,
+        lw=lw,
+        zorder=5,
+    ))
 
 
 # Backward-compatible alias used by older call sites.
@@ -169,12 +156,6 @@ def draw_domain_row(
 ) -> None:
     """Segment-aligned fills and borders inside rounded domain bubbles."""
     from src.domain_alignment import domain_corner_radius, domain_font_size
-
-    boundaries = {
-        segments[i].x1
-        for i in range(len(segments) - 1)
-        if abs(segments[i].x1 - segments[i + 1].x0) < 1e-6
-    }
 
     for domain in resolved_domains:
         w = domain.draw_width
@@ -232,14 +213,4 @@ def draw_domain_row(
             fontsize=fs,
             fontweight="bold",
             zorder=zorder + 3,
-        )
-
-    for bx in boundaries:
-        border = next(
-            (s.border for s in segments if abs(s.x1 - bx) < 1e-6),
-            "#333",
-        )
-        ax.plot(
-            [bx, bx], [y, y + height],
-            color=border, lw=0.9, zorder=zorder + 2, alpha=0.8,
         )

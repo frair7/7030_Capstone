@@ -40,7 +40,7 @@ from src.exon_display_config import (
 from src.exon_shape_renderer import add_exon_outline, draw_domain_row, draw_transcript_color_band
 from src.part_segments import build_part_segments
 from src.models import ExonRecord
-from src.mutation_viz import exon_range_from_row
+from src.mutation_viz import exon_range_from_row, sort_mutations_by_exon_range
 from src.puzzle_geometry import calculate_bump_depth
 
 # Layout — transcript and domain rows share identical exon x-positions
@@ -371,7 +371,7 @@ def create_cohort_mutation_map(
     preview_row: Optional[dict[str, Any]] = None,
     title: str = "DMD mutation map",
 ) -> Figure:
-    rows = list(selected_rows)
+    rows = sort_mutations_by_exon_range(list(selected_rows))
     if preview_row and preview_row.get("start_region"):
         rows = [preview_row] + [r for r in rows if r.get("id") != preview_row.get("id")]
 

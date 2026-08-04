@@ -5,10 +5,12 @@ from __future__ import annotations
 import streamlit as st
 
 from src.config import REFERENCE
+from src.streamlit_theme import apply_widescreen_theme, render_nav_bar
 from src.ui_helpers import init_session_state
 
 init_session_state()
-st.header("Methods and Limitations")
+apply_widescreen_theme()
+render_nav_bar(page_title="Methods and Limitations")
 
 st.error(
     "**Research and educational use only.** This application is not a clinical "

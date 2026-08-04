@@ -18,11 +18,13 @@ from src.reference_data import (
     load_map_styles_table,
     load_protein_domains_table,
 )
+from src.streamlit_theme import apply_widescreen_theme, render_nav_bar
 from src.ui_helpers import check_reference_data, init_session_state, plotly_config
 from src.visualization import ViewMode, create_combined_figure, create_domain_figure
 
 init_session_state()
-st.header("Reference Map")
+apply_widescreen_theme()
+render_nav_bar(page_title="Reference Map")
 st.markdown(
     f"""
     Canonical **Dp427m** reference map for **{REFERENCE.refseq_transcript}**

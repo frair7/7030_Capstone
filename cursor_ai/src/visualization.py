@@ -485,14 +485,15 @@ def visualization_state_from_variant(
 
     if skip_candidate:
         state.skip_candidate_exons = set(skip_candidate.additional_skipped_exons)
-        # Retained = not deleted by mutation or additional skip
-        all_removed = set(skip_candidate.deleted_exons) | set(
-            skip_candidate.additional_skipped_exons
+        removed = (
+            set(skip_candidate.all_removed_exons)
+            if skip_candidate.all_removed_exons
+            else set(skip_candidate.deleted_exons) | set(skip_candidate.additional_skipped_exons)
         )
         state.retained_exons = {
             e.exon_number
             for e in build_exon_records()
-            if e.exon_number not in all_removed
+            if e.exon_number not in removed
         }
 
     return state

@@ -4,8 +4,14 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
+import pandas as pd
+
+from src.config import REFERENCE
 from src.region_parser import parse_region_text
 from src.visualization import VisualizationState
+
+N_EXONS = REFERENCE.coding_exon_count
+_UNPARSEABLE_SORT_KEY = (N_EXONS + 1, N_EXONS + 1)
 
 
 def exon_range_from_row(row: dict[str, Any]) -> Optional[tuple[int, int]]:
@@ -24,6 +30,31 @@ def exon_range_from_row(row: dict[str, Any]) -> Optional[tuple[int, int]]:
     if first > last:
         first, last = last, first
     return first, last
+
+
+def exon_sort_key_from_row(row: dict[str, Any]) -> tuple[int, int]:
+    """Sort key (start_exon, end_exon) for catalog rows and map plotting."""
+    rng = exon_range_from_row(row)
+    if rng is None:
+        return _UNPARSEABLE_SORT_KEY
+    return rng
+
+
+def sort_mutations_by_exon_range(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Return mutations sorted by (start_exon, end_exon) ascending."""
+    return sorted(rows, key=exon_sort_key_from_row)
+
+
+def sort_catalog_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    """Sort catalog rows by (start_exon, end_exon) ascending."""
+    if df.empty:
+        return df
+    out = df.copy()
+    keys = out.apply(lambda row: exon_sort_key_from_row(row.to_dict()), axis=1)
+    out["_sort_start"] = [k[0] for k in keys]
+    out["_sort_end"] = [k[1] for k in keys]
+    out = out.sort_values(["_sort_start", "_sort_end"], kind="stable")
+    return out.drop(columns=["_sort_start", "_sort_end"]).reset_index(drop=True)
 
 
 def viz_state_from_row(row: dict[str, Any]) -> VisualizationState:

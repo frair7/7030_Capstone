@@ -22,7 +22,8 @@
 ### Phase 3 — Core analysis
 - `src/models.py`, `variant_parser.py`, `coordinate_mapper.py`
 - `frame_analysis.py`, `exon_skipping.py` — frame logic from splice phases
-- pytest suite (82 tests)
+- `exon_skipping_analysis.py` — mutation-specific candidate generation for Model by Exon Target tab
+- pytest suite (154 tests)
 
 ### Phase 4 — Visualization
 - Plotly combined transcript + domain figure (`src/visualization.py`)
@@ -55,6 +56,7 @@
 3. Rebuild map to match reference figure; incorporate Claude/ChatGPT reference code.
 4. Transcript puzzle shapes over continuous color band; borders correlate with underlying domain hue.
 5. Domain row alignment, hinge guides, left panel layout, R3/H2 exon 17 boundary fix.
+6. Replace Model by Exon Target logic: mutation-specific frame restoration via `exon_skipping_analysis.py`; target exon as display filter only; validated dup2, dup3-4, del7, del45, del3-7≠exon45 cases.
 
 ## Manual review checklist
 

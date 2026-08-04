@@ -16,4 +16,7 @@ textColor = "#1a1a1a"
 font = "sans serif"
 
 [ui]
-hideTopBar = false
+hideTopBar = true
+
+[client]
+showSidebarNavigation = true

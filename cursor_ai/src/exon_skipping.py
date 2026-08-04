@@ -1,7 +1,7 @@
 """
 Search for computational exon-skipping candidates that restore reading frame.
 
-Candidates are ranked by transparent, non-clinical criteria only.
+Only frame-restoring strategies are returned as displayed skip candidates.
 """
 
 from __future__ import annotations
@@ -10,13 +10,21 @@ import itertools
 from typing import Optional
 
 from src.config import REFERENCE
-from src.frame_analysis import assess_deletion_frame, coding_bp_for_exon_range, total_coding_bp
+from src.frame_analysis import assess_deletion_frame
 from src.models import ExonRecord, FrameResult, FrameStatus, SkipCandidate, SkipEvidence
 from src.coordinate_mapper import build_exon_records
+from src.transcript_reconstruction import (
+    ReconstructedTranscript,
+    _contiguous_blocks,
+    _extension_counts,
+    generate_boundary_extension_candidates,
+    reconstruct_deletion_skip,
+)
+
+MAX_DISPLAY_CANDIDATES = 3
 
 
 def _domains_for_cds_range(cds_start: int, cds_end: int) -> list[str]:
-    """Return domain names overlapping a CDS range (requires domain table)."""
     from src.reference_data import load_domain_table
 
     affected: list[str] = []
@@ -32,77 +40,134 @@ def _domains_for_cds_range(cds_start: int, cds_end: int) -> list[str]:
     return affected
 
 
-def _evaluate_skip_set(
+def ranking_key(candidate: SkipCandidate) -> tuple:
+    """Rank only frame-restoring candidates (restores_frame already filtered)."""
+    return candidate.rank_score
+
+
+def _build_rank_score(
+    transcript: ReconstructedTranscript,
+    mutation_first: int,
+    mutation_last: int,
+    *,
+    is_advanced: bool,
+) -> tuple:
+    additional = transcript.additional_skipped_exons
+    up_count, down_count = _extension_counts(
+        mutation_first, mutation_last, set(additional),
+    )
+    block_count = len(_contiguous_blocks(additional))
+    return (
+        len(additional),
+        block_count,
+        transcript.additional_coding_bases_removed,
+        -transcript.estimated_protein_aa,
+        1 if is_advanced else 0,
+        up_count,
+        down_count,
+        tuple(additional),
+    )
+
+
+def _candidate_from_transcript(
+    transcript: ReconstructedTranscript,
+    mutation_label: str,
+    exons: list[ExonRecord],
+    mutation_first: int,
+    mutation_last: int,
+    *,
+    is_advanced: bool = False,
+) -> SkipCandidate:
+    index = {e.exon_number: e for e in exons}
+    principal = transcript.principal_junction
+    if principal:
+        final_up, final_down = principal
+    elif transcript.new_junctions:
+        final_up, final_down = transcript.new_junctions[0]
+    else:
+        final_up, final_down = 0, 0
+
+    cds_start = 1
+    if transcript.new_junctions:
+        up = transcript.new_junctions[0][0]
+        if up in index and index[up].cumulative_cds_end:
+            cds_start = index[up].cumulative_cds_end + 1
+
+    additional = transcript.additional_skipped_exons
+    up_count, down_count = _extension_counts(
+        mutation_first, mutation_last, set(additional),
+    )
+
+    return SkipCandidate(
+        original_mutation=mutation_label,
+        deleted_exons=transcript.original_mutation_exons,
+        additional_skipped_exons=additional,
+        all_removed_exons=transcript.all_removed_exons,
+        retained_exons=transcript.retained_exons,
+        new_junctions=transcript.new_junctions,
+        mutation_boundary_junction=transcript.mutation_boundary_junction,
+        principal_junction=principal,
+        final_upstream_exon=final_up,
+        final_downstream_exon=final_down,
+        total_coding_bases_removed=transcript.total_coding_bases_removed,
+        additional_coding_bases_removed=transcript.additional_coding_bases_removed,
+        restores_frame=transcript.restores_frame,
+        estimated_remaining_coding_bp=transcript.estimated_remaining_coding_bp,
+        estimated_protein_aa=transcript.estimated_protein_aa,
+        evidence_class=SkipEvidence.COMPUTATIONAL,
+        rank_score=_build_rank_score(
+            transcript, mutation_first, mutation_last, is_advanced=is_advanced,
+        ),
+        is_boundary_adjacent=transcript.is_boundary_adjacent,
+        is_structurally_valid=transcript.is_structurally_valid,
+        is_advanced_noncontiguous=is_advanced,
+        skip_block_count=len(_contiguous_blocks(additional)),
+        upstream_extension_count=up_count,
+        downstream_extension_count=down_count,
+        assumptions=[
+            "Computational frame restoration only — not therapeutic evidence.",
+            "Assumes additional exons can be skipped without disrupting splice regulation.",
+            "Frame assessed at every novel junction in the reconstructed transcript.",
+        ],
+        affected_domains=_domains_for_cds_range(
+            cds_start, transcript.estimated_remaining_coding_bp,
+        ),
+    )
+
+
+def evaluate_candidate(
     mutation_first: int,
     mutation_last: int,
     additional_skips: tuple[int, ...],
     exons: list[ExonRecord],
     mutation_label: str,
+    *,
+    is_advanced: bool = False,
 ) -> Optional[SkipCandidate]:
-    """Evaluate one additional-skip combination."""
-    index = {e.exon_number: e for e in exons}
-    deleted = set(range(mutation_first, mutation_last + 1))
-    skip_set = set(additional_skips)
-
-    if skip_set & deleted:
-        return None  # cannot skip already-deleted exons
-
-    all_removed = sorted(deleted | skip_set)
-    if not all_removed:
-        return None
-
-    first_removed = all_removed[0]
-    last_removed = all_removed[-1]
-    upstream = first_removed - 1
-    downstream = last_removed + 1
-
-    if upstream < 1 or downstream > REFERENCE.coding_exon_count:
-        return None
-
-    removed_bp = sum(index[e].coding_length_bp for e in all_removed)
-    additional_bp = sum(index[e].coding_length_bp for e in skip_set)
-
-    up_exon = index[upstream]
-    down_exon = index[downstream]
-    if up_exon.splice_phase_3prime is None or down_exon.splice_phase_5prime is None:
-        return None
-
-    junction_phase = (up_exon.splice_phase_3prime + removed_bp) % 3
-    restores = removed_bp % 3 == 0 and junction_phase == down_exon.splice_phase_5prime
-
-    if not restores:
-        return None
-
-    total_bp = total_coding_bp(exons)
-    remaining = total_bp - removed_bp
-    contiguous = int(
-        skip_set == set(range(min(skip_set), max(skip_set) + 1)) if skip_set else 1
+    """Reconstruct and return a candidate only when frame is restored."""
+    transcript = reconstruct_deletion_skip(
+        mutation_first,
+        mutation_last,
+        additional_skips,
+        exons,
+        require_frame=False,
     )
-    # Lower rank_score is better: (additional exons, additional bp, non-contiguous penalty)
-    rank = (len(skip_set), additional_bp, 0 if contiguous else 1)
-
-    cds_removed_start = up_exon.cumulative_cds_end + 1 if up_exon.cumulative_cds_end else 1
-    cds_removed_end = down_exon.cumulative_cds_start - 1 if down_exon.cumulative_cds_start else remaining
-
-    return SkipCandidate(
-        original_mutation=mutation_label,
-        deleted_exons=list(range(mutation_first, mutation_last + 1)),
-        additional_skipped_exons=sorted(skip_set),
-        final_upstream_exon=upstream,
-        final_downstream_exon=downstream,
-        total_coding_bases_removed=removed_bp,
-        additional_coding_bases_removed=additional_bp,
-        restores_frame=True,
-        estimated_remaining_coding_bp=remaining,
-        estimated_protein_aa=remaining // 3,
-        evidence_class=SkipEvidence.COMPUTATIONAL,
-        rank_score=rank,
-        assumptions=[
-            "Computational frame restoration only — not therapeutic evidence.",
-            "Assumes additional exons can be skipped without disrupting splice regulation.",
-        ],
-        affected_domains=_domains_for_cds_range(cds_removed_start, cds_removed_end),
+    if not transcript or not transcript.is_structurally_valid:
+        return None
+    if not transcript.restores_frame:
+        return None
+    return _candidate_from_transcript(
+        transcript, mutation_label, exons, mutation_first, mutation_last,
+        is_advanced=is_advanced,
     )
+
+
+def _filter_valid_candidates(candidates: list[SkipCandidate]) -> list[SkipCandidate]:
+    """Keep only structurally valid, frame-restoring candidates."""
+    return [
+        c for c in candidates
+        if c is not None and c.is_structurally_valid and c.restores_frame is True
+    ]
 
 
 def find_skip_candidates(
@@ -113,12 +178,12 @@ def find_skip_candidates(
     max_additional_skips: int = 3,
     mutation_label: str = "",
     advanced: bool = False,
+    max_results: int = MAX_DISPLAY_CANDIDATES,
 ) -> list[SkipCandidate]:
     """
-    Search for additional exon skips that restore frame after a deletion.
+    Search boundary-extension strategies; return only frame-restoring candidates.
 
-    By default searches adjacent/contiguous strategies near deletion boundaries.
-    Set ``advanced=True`` to include non-contiguous multi-exon combinations.
+  ``max_additional_skips`` controls search depth, not how many results are shown.
     """
     records = exons if exons is not None else build_exon_records()
     label = mutation_label or f"del{mutation_first}-{mutation_last}"
@@ -127,56 +192,54 @@ def find_skip_candidates(
     if base_frame.status == FrameStatus.IN_FRAME:
         return []
 
-    candidates: list[SkipCandidate] = []
+    generated = generate_boundary_extension_candidates(
+        mutation_first, mutation_last, max_additional_skips=max_additional_skips,
+    )
 
-    # Candidate pool: retained exons adjacent to deletion boundaries, expanding outward
-    adjacent_pool: list[int] = []
-    for offset in range(1, 6):
-        up = mutation_first - offset
-        down = mutation_last + offset
-        if up >= 1:
-            adjacent_pool.append(up)
-        if down <= REFERENCE.coding_exon_count:
-            adjacent_pool.append(down)
-
-    search_sizes = range(1, max_additional_skips + 1)
-    for size in search_sizes:
-        for combo in itertools.combinations(adjacent_pool, size):
-            if not advanced and size > 1:
-                # Require contiguous additional skips in basic mode
-                sorted_combo = sorted(combo)
-                if sorted_combo != list(range(sorted_combo[0], sorted_combo[-1] + 1)):
-                    continue
-            candidate = _evaluate_skip_set(
-                mutation_first, mutation_last, combo, records, label
-            )
-            if candidate:
-                candidates.append(candidate)
+    evaluated: list[SkipCandidate] = []
+    for combo in generated:
+        candidate = evaluate_candidate(
+            mutation_first, mutation_last, combo, records, label, is_advanced=False,
+        )
+        if candidate:
+            evaluated.append(candidate)
 
     if advanced:
-        # Broader search across all retained exons (still bounded by max_additional_skips)
         retained = [
-            e.exon_number
-            for e in records
+            e.exon_number for e in records
             if e.exon_number < mutation_first or e.exon_number > mutation_last
         ]
-        for size in search_sizes:
+        seen = {tuple(c.additional_skipped_exons) for c in evaluated}
+        base_combos = set(generated)
+        for size in range(1, max_additional_skips + 1):
             for combo in itertools.combinations(retained, size):
-                if combo in [tuple(c.additional_skipped_exons) for c in candidates]:
+                if combo in seen or combo in base_combos:
                     continue
-                candidate = _evaluate_skip_set(
-                    mutation_first, mutation_last, combo, records, label
+                candidate = evaluate_candidate(
+                    mutation_first, mutation_last, combo, records, label,
+                    is_advanced=True,
                 )
                 if candidate:
-                    candidates.append(candidate)
+                    candidate.assumptions.append(
+                        "Advanced disconnected skip strategy — not a single boundary extension."
+                    )
+                    evaluated.append(candidate)
+                    seen.add(combo)
 
-    # Deduplicate by additional skip set
-    seen: set[tuple[int, ...]] = set()
+    valid = _filter_valid_candidates(evaluated)
+    ranked = sorted(valid, key=ranking_key)
+
     unique: list[SkipCandidate] = []
-    for cand in sorted(candidates, key=lambda c: c.rank_score):
+    seen_keys: set[tuple[int, ...]] = set()
+    for cand in ranked:
         key = tuple(cand.additional_skipped_exons)
-        if key not in seen:
-            seen.add(key)
+        if key not in seen_keys:
+            seen_keys.add(key)
             unique.append(cand)
 
-    return unique
+    return unique[:max_results]
+
+
+# Backward-compatible aliases
+_evaluate_skip_set = evaluate_candidate
+_candidate_from_transcript_export = _candidate_from_transcript
