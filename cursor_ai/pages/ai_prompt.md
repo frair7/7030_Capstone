@@ -40,6 +40,30 @@ Two tabs:
 - Mutation detail with schematic overlay from `overlay_from_row_and_candidate()`
 - Deletions and duplications must never share a generic flanking-exon lookup
 
+## Reference Map (`4_Reference_Map.py`)
+
+This is one continuous scrolling atlas. Never convert it to tabs.
+
+Required order:
+
+1. Genomic Reference
+2. Transcript Reference
+3. Protein Domains and Binding Sites
+4. Data Provenance and External Resources
+
+The page delegates transforms and Plotly viewers to `src/reference_atlas.py`.
+It must not import patient catalog data or exon-skipping analysis.
+
+Coordinate rules:
+
+- Genomic axis: standard ascending chromosome X coordinates, always labeled GRCh38
+- Transcript axis: full 13,992-bp spliced ENST00000357033.9 transcript, including UTR
+- CDS Start/End fields: cumulative CDS offsets, not absolute transcript positions
+- Protein axis: Dp427m amino acids 1–3,685
+- Detailed Leiden feature source values are transcript nucleotides despite legacy
+  amino-acid column names; preserve source positions and explicitly derive AA fields
+- BLAST is sequence validation only, never a coordinate source
+
 ## Common user expectation
 
 The transcript + domain rows always render. Patient deletion bars appear only after **Plot selected on map**.

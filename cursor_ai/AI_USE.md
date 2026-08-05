@@ -23,7 +23,7 @@
 - `src/models.py`, `variant_parser.py`, `coordinate_mapper.py`
 - `frame_analysis.py`, `exon_skipping.py` — frame logic from splice phases
 - `exon_skipping_analysis.py` — mutation-specific candidate generation for Model by Exon Target tab
-- pytest suite (154 tests)
+- pytest suite (161 tests)
 
 ### Phase 4 — Visualization
 - Plotly combined transcript + domain figure (`src/visualization.py`)

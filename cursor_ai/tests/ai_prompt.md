@@ -14,6 +14,21 @@ PYTHONPATH=. pytest tests/test_mutation_map_svg.py tests/test_puzzle_geometry.py
 PYTHONPATH=. pytest tests/test_exon_skipping_analysis.py tests/test_exon_skipping_catalog.py tests/test_skip_candidate_filtering.py tests/test_transcript_reconstruction.py -q
 ```
 
+## Before pushing Reference Map changes
+
+```bash
+PYTHONPATH=. pytest tests/test_reference_atlas.py tests/test_reference_data.py tests/test_visualization.py -q
+```
+
+`test_reference_atlas.py` verifies:
+
+- continuous section order with no `st.tabs()`
+- GRCh38 coding genomic bounds and numeric CSV fields
+- complete 13,992-bp spliced-transcript scale with explicit UTRs
+- Leiden transcript-nucleotide feature conversion to Dp427m amino acids
+- level-specific genomic, transcript, and protein axis labels
+- external links built from the validated local DMD locus
+
 ## Exon skipping tests (`test_exon_skipping_analysis.py`)
 
 Uses canonical Dp427m coding lengths via `conftest.py` fixture `exon_coding_lengths` (from `build_exon_records()` — do not hardcode exon lengths).

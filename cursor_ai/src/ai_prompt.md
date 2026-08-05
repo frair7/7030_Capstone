@@ -14,6 +14,28 @@ Primary files (in dependency order):
 6. `mutation_map_svg.py` — Streamlit interactive map
 7. `mutation_map_figure.py` — PNG export
 
+## Reference atlas (`reference_atlas.py`)
+
+Authoritative transforms and Plotly viewers for `pages/4_Reference_Map.py`:
+
+- `build_exon_reference_frame()` — typed genomic, full transcript, CDS, UTR,
+  amino-acid, and derived coding-genomic fields
+- `create_genomic_viewer()` — standard chromosome orientation with reverse-strand arrow
+- `create_transcript_viewer()` — equal-width schematic or complete spliced-transcript scale
+- `build_detailed_protein_features()` — explicit Leiden transcript-nt → AA conversion
+- `create_protein_overview()` / `create_protein_feature_viewer()` — AA-only protein axes
+- `resource_table()` — validated and grouped external links
+
+Critical coordinate facts:
+
+- ENST00000357033.9 local transcript length: 13,992 bp
+- Local CDS length: 11,058 bp including stop codon
+- Derived UTR lengths from Ensembl table: 237 bp 5′ and 2,697 bp 3′
+- Detailed feature CSV values 1–13,993 are transcript nucleotides despite legacy
+  headers `first_amino_acid` / `last_amino_acid`; never plot those raw values as AA
+- Genomic coding bounds are locally derived from full exon bounds, strand, and
+  validated coding length and must remain inside the GRCh38 full-exon interval
+
 ## Exon skipping modules
 
 ### `exon_skipping_analysis.py` — authoritative mutation-specific frame math

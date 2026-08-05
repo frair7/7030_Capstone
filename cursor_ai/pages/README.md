@@ -7,7 +7,7 @@ Multi-page Streamlit modules. Navigation order follows numeric prefixes.
 | `1_Mutation_Explorer.py` | Interactive cohort mutation map and plot selection |
 | `2_Mutation_Catalog.py` | Data entry, editing, CSV import/export, audit |
 | `3_Exon_Skipping_Analysis.py` | Reading-frame skip candidate search |
-| `4_Reference_Map.py` | Full exon table + reference visualization |
+| `4_Reference_Map.py` | Continuous genomic → transcript → protein → provenance atlas |
 | `5_Methods_and_Limitations.py` | Methods, assumptions, disclaimers |
 
 Entry point: `../app.py` (home page).
@@ -25,6 +25,17 @@ Entry point: `../app.py` (home page).
 1. Enter mutations via quick entry or full intake form
 2. Edit the catalog table inline; save, delete, or reset changes
 3. Import/export CSV with validation preview and audit trail
+
+## Reference Map flow
+
+One vertically scrolling page (no tabs), in this order:
+
+1. GRCh38 genomic locus viewer and coding-exon table
+2. Full spliced-transcript viewer, exon table, and styling classes
+3. Dp427m amino-acid viewers, feature table, and styling atlas
+4. Provenance, coordinate safeguards, and grouped external resources
+
+Reference transforms and Plotly viewers live in `src/reference_atlas.py`.
 
 ## Running
 

@@ -44,8 +44,28 @@ Dependencies: streamlit, pandas, numpy, plotly, matplotlib, biopython, pytest, p
 
 1. **Mutation Explorer** (`pages/1_Mutation_Explorer.py`) — primary focus; catalog intake, filters, interactive SVG cohort map
 2. **Exon Skipping Analysis** (`pages/3_Exon_Skipping_Analysis.py`) — two tabs: Model by exon target, Model by mutation
-3. Reference Map
+3. **Reference Map** (`pages/4_Reference_Map.py`) — continuous genomic, transcript, protein, and provenance atlas
 4. Methods and Limitations
+
+## Reference Map architecture
+
+The Reference Map is one vertically scrolling page; do not use `st.tabs()` or
+duplicate Mutation Explorer functionality. Section order is genomic → transcript
+→ protein → provenance.
+
+`src/reference_atlas.py` owns typed transforms and Plotly viewers.
+
+| Biological level | Local coordinate source | Axis |
+|------------------|-------------------------|------|
+| Genome | Ensembl ENST00000357033.9 on GRCh38 | chrX genomic bp, standard ascending orientation |
+| Transcript | `transcript_exon_start/end` | Complete 13,992-bp spliced transcript including UTR |
+| CDS | cumulative `cds_start/end` | 11,058-bp CDS offsets; not absolute transcript positions |
+| Protein | NP_003997.2 / UniProt P11532 | Dp427m amino acids 1–3,685 |
+
+Important conflict: `dmd_protein_domains_dp427m.csv` has legacy headers naming
+positions as amino acids, but values (5′UTR 1–244, CDS 245–11302) are
+transcript-nucleotide coordinates. The atlas preserves those source fields and
+derives AA coordinates explicitly for protein-coding features.
 
 ## Mutation Explorer (current design)
 
@@ -198,7 +218,7 @@ export MPLCONFIGDIR=cursor_ai/.mplconfig
 PYTHONPATH=. pytest -q
 ```
 
-Last known: **154 tests passing** (includes `tests/test_exon_skipping_analysis.py`).
+Last known: **161 tests passing** (includes Reference Map atlas validation).
 
 Exon-skipping regression tests:
 
