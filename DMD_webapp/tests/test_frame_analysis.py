@@ -26,7 +26,7 @@ class TestDeletionFrame:
         del45-50 removes 871 coding bp (871 mod 3 = 1).
 
         Verified against Ensembl ENST00000357033.9 exon table
-        (cursor_ai/data/dmd_exons_grch38.csv).
+        (DMD_webapp/data/dmd_exons_grch38.csv).
         """
         result = assess_deletion_frame(45, 50, exons)
         assert result.status == FrameStatus.OUT_OF_FRAME

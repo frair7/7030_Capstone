@@ -5,7 +5,7 @@ Fetch authoritative DMD Dp427m exon reference data and cache locally.
 Primary source: Ensembl REST API (GRCh38), transcript ENST00000357033.
 Cross-check metadata: NCBI RefSeq NM_004006.3.
 
-Usage (from cursor_ai/):
+Usage (from DMD_webapp/):
     python scripts/fetch_reference_data.py
     python scripts/fetch_reference_data.py --output data/dmd_exons_grch38.csv
 """
@@ -22,7 +22,7 @@ from typing import Any
 
 import requests
 
-# Allow running as a script from cursor_ai/
+# Allow running as a script from DMD_webapp/
 ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = ROOT.parent
 REFERENCE_DIR = REPO_ROOT / "reference_tables"

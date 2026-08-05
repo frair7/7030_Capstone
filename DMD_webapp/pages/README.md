@@ -40,7 +40,7 @@ Reference transforms and Plotly viewers live in `src/reference_atlas.py`.
 ## Running
 
 ```bash
-cd cursor_ai
+cd DMD_webapp
 python -m streamlit run app.py --server.port 8503
 ```
 

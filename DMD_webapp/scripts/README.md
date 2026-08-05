@@ -22,7 +22,7 @@ Loaded at runtime by `src/dp427m_exon_data.py` via `exec()`.
 ### Regenerate static reference figure
 
 ```bash
-cd cursor_ai
+cd DMD_webapp
 python scripts/reference_make_figure.py
 # writes data/dp427m_figure.png
 ```

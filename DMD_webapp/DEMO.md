@@ -7,8 +7,8 @@ Use this outline during your capstone presentation (~8 minutes).
 ```bash
 module load miniconda3/24.1.2-py310
 conda activate 7030_capstone
-cd ~/7030_Capstone/cursor_ai
-export MPLCONFIGDIR=~/7030_Capstone/cursor_ai/.mplconfig
+cd ~/7030_Capstone/DMD_webapp
+export MPLCONFIGDIR=~/7030_Capstone/DMD_webapp/.mplconfig
 python -m streamlit run app.py --server.port 8503 --server.headless true
 ```
 

@@ -48,7 +48,7 @@ DMD lies on the **minus (reverse) strand** of chromosome X.
 
 ## Regenerating Ensembl/UniProt tables
 
-From `cursor_ai/`:
+From `DMD_webapp/`:
 
 ```bash
 python scripts/fetch_reference_data.py

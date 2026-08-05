@@ -3,7 +3,7 @@
 #
 #   module load miniconda3/24.1.2-py310
 #   conda activate 7030_capstone
-#   conda env update --name 7030_capstone --file cursor_ai/environment.yml
+#   conda env update --name 7030_capstone --file DMD_webapp/environment.yml
 #
 name: 7030_capstone
 channels:

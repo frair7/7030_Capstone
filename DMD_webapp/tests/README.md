@@ -5,7 +5,7 @@ pytest suite for the DMD Mutation and Exon-Skipping Explorer.
 ## Run all tests
 
 ```bash
-cd cursor_ai
+cd DMD_webapp
 export MPLCONFIGDIR=.mplconfig
 PYTHONPATH=. pytest -q
 ```

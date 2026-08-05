@@ -1,6 +1,6 @@
 # AI prompt — `data/`
 
-Folder-specific context for the `cursor_ai/data/` directory. Full project context: [../ai_prompt.md](../ai_prompt.md).
+Folder-specific context for the `DMD_webapp/data/` directory. Full project context: [../ai_prompt.md](../ai_prompt.md).
 
 ## Purpose
 

@@ -2,7 +2,7 @@
 """
 Validate cached DMD reference data.
 
-Usage (from cursor_ai/):
+Usage (from DMD_webapp/):
     python scripts/validate_reference_data.py
 """
 

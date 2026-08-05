@@ -1,6 +1,6 @@
 # AI prompt — `src/`
 
-Folder-specific context for `cursor_ai/src/`. Full project context: [../ai_prompt.md](../ai_prompt.md).
+Folder-specific context for `DMD_webapp/src/`. Full project context: [../ai_prompt.md](../ai_prompt.md).
 
 ## When editing the cohort map
 

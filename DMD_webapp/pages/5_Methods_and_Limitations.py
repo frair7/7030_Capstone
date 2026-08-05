@@ -109,7 +109,7 @@ st.markdown(
 
 st.subheader("AI use statement")
 st.markdown(
-    "See [AI_USE.md](https://github.com) in the repository or `cursor_ai/AI_USE.md` "
+    "See [AI_USE.md](https://github.com) in the repository or `DMD_webapp/AI_USE.md` "
     "for documentation of Cursor/AI-assisted development."
 )
 

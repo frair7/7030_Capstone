@@ -6,16 +6,16 @@ Use this file to resume AI-assisted work on the capstone without re-explaining t
 
 **BSGP 7030 Capstone** — locally hosted **Streamlit** web app for research/educational exploration of *DMD* / Dp427m mutations (NM_004006.3, GRCh38, 79 coding exons). **Not for clinical use.**
 
-Active codebase: **`cursor_ai/`** subfolder only. Parent repo (`7030_Capstone/`) has older scripts and `data/input/DMD_Mutations_clean.csv`.
+Active codebase: **`DMD_webapp/`** subfolder only. Parent repo (`7030_Capstone/`) has older scripts and `data/input/DMD_Mutations_clean.csv`.
 
 ## Environment (OSC)
 
 ```bash
 module load miniconda3/24.1.2-py310
 conda activate 7030_capstone
-conda env update --name 7030_capstone --file cursor_ai/environment.yml   # do NOT use --prune
-cd ~/7030_Capstone/cursor_ai
-export MPLCONFIGDIR=~/7030_Capstone/cursor_ai/.mplconfig
+conda env update --name 7030_capstone --file DMD_webapp/environment.yml   # do NOT use --prune
+cd ~/7030_Capstone/DMD_webapp
+export MPLCONFIGDIR=~/7030_Capstone/DMD_webapp/.mplconfig
 python -m streamlit run app.py --server.port 8503 --server.headless true
 ```
 
@@ -212,9 +212,9 @@ set. Target filtering must not renumber the underlying mutation-specific rank.
 ## Testing
 
 ```bash
-cd cursor_ai
+cd DMD_webapp
 module load miniconda3/24.1.2-py310 && conda activate 7030_capstone
-export MPLCONFIGDIR=cursor_ai/.mplconfig
+export MPLCONFIGDIR=DMD_webapp/.mplconfig
 PYTHONPATH=. pytest -q
 ```
 

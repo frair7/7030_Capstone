@@ -211,7 +211,7 @@ sources, and links to the project's AI-use statement.
 ## Repository layout
 
 ```text
-cursor_ai/
+DMD_webapp/
 ├── app.py                      # Streamlit entry point
 ├── ai_prompt.md                # AI session handoff (full project context)
 ├── environment.yml             # Conda environment
@@ -236,7 +236,7 @@ Parent repository (`7030_Capstone/`) contains earlier batch scripts under `data/
 ```bash
 module load miniconda3/24.1.2-py310
 conda activate 7030_capstone
-conda env update --name 7030_capstone --file cursor_ai/environment.yml
+conda env update --name 7030_capstone --file DMD_webapp/environment.yml
 ```
 
 > **Do not use `--prune`** — the environment is shared with prior coursework.
@@ -249,10 +249,10 @@ python -c "import streamlit, plotly, Bio; print('OK')"
 
 ## Running the app
 
-From `cursor_ai/`:
+From `DMD_webapp/`:
 
 ```bash
-export MPLCONFIGDIR=~/7030_Capstone/cursor_ai/.mplconfig
+export MPLCONFIGDIR=~/7030_Capstone/DMD_webapp/.mplconfig
 python -m streamlit run app.py --server.port 8503 --server.headless true
 ```
 
@@ -280,7 +280,7 @@ Select catalog rows and click **Plot selected on map** to show patient deletion 
 ## Testing
 
 ```bash
-cd cursor_ai
+cd DMD_webapp
 export MPLCONFIGDIR=.mplconfig
 PYTHONPATH=. pytest -q
 ```

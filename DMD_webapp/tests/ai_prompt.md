@@ -1,6 +1,6 @@
 # AI prompt — `tests/`
 
-Folder-specific context for `cursor_ai/tests/`. Full project context: [../ai_prompt.md](../ai_prompt.md).
+Folder-specific context for `DMD_webapp/tests/`. Full project context: [../ai_prompt.md](../ai_prompt.md).
 
 ## Before pushing map changes
 

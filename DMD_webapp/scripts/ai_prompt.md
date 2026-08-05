@@ -1,6 +1,6 @@
 # AI prompt — `scripts/`
 
-Folder-specific context for `cursor_ai/scripts/`. Full project context: [../ai_prompt.md](../ai_prompt.md).
+Folder-specific context for `DMD_webapp/scripts/`. Full project context: [../ai_prompt.md](../ai_prompt.md).
 
 ## `reference_make_figure.py` is authoritative
 

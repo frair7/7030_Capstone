@@ -231,5 +231,5 @@ __pycache__/
 .mplconfig/
 
 # Generated previews and outputs
-cursor_ai/outputs/
+DMD_webapp/outputs/
 >>>>>>> Stashed changes

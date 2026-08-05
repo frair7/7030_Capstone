@@ -8,7 +8,7 @@
 ## What AI assisted with
 
 ### Phase 1 — Scaffold
-- `cursor_ai/` project scaffold and directory layout
+- `DMD_webapp/` project scaffold and directory layout
 - Lean `environment.yml` and `requirements.txt` for Streamlit stack
 - Minimal Streamlit application shell (`app.py`)
 - Centralized transcript configuration (`src/config.py`)

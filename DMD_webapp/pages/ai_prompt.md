@@ -1,6 +1,6 @@
 # AI prompt — `pages/`
 
-Folder-specific context for `cursor_ai/pages/`. Full project context: [../ai_prompt.md](../ai_prompt.md).
+Folder-specific context for `DMD_webapp/pages/`. Full project context: [../ai_prompt.md](../ai_prompt.md).
 
 ## Mutation Explorer (`1_Mutation_Explorer.py`)
 
