@@ -35,7 +35,7 @@ summarizes the five pages, and lists supported variant-input formats. Start
 here to confirm that the 79-exon reference loaded successfully and to choose
 the next stage of the workflow.
 
-![Application home page showing the active reference, page guide, and supported variant formats](DMD_webapp/docs/screenshots/home-overview.png)
+![Application home page showing the active reference, page guide, and supported variant formats](docs/screenshots/home-overview.png)
 
 ### Mutation Explorer
 
@@ -52,7 +52,7 @@ compared visually.
   navigator supports inspection of the full transcript.
 - The collapsed download control exports a static PNG version of the map.
 
-![Mutation Explorer transcript map, filters, and participant selection table](DMD_webapp/docs/screenshots/mutation-explorer-map.png)
+![Mutation Explorer transcript map, filters, and participant selection table](docs/screenshots/mutation-explorer-map.png)
 
 ### Mutation Catalog
 
@@ -68,7 +68,7 @@ phenotype, molecular, and experimental fields manually. Computed frame,
 domain, and expected-protein fields can be autofilled from the local reference
 before the record is added.
 
-![Mutation Catalog quick entry and structured mutation form](DMD_webapp/docs/screenshots/mutation-catalog-entry.png)
+![Mutation Catalog quick entry and structured mutation form](docs/screenshots/mutation-catalog-entry.png)
 
 #### Import, export, table editing, and audit controls
 
@@ -77,7 +77,7 @@ The table supports direct correction and deletion of records, with explicit
 save/reset controls. Audit history exposes record-level changes, while catalog
 management contains secondary maintenance actions.
 
-![Mutation Catalog CSV controls, editable table, audit history, and catalog management](DMD_webapp/docs/screenshots/mutation-catalog-import-export.png)
+![Mutation Catalog CSV controls, editable table, audit history, and catalog management](docs/screenshots/mutation-catalog-import-export.png)
 
 ### Exon Skipping Analysis
 
@@ -100,7 +100,7 @@ The results table keeps participant ID, mutation description, candidate rank,
 and complete skip combination in separate fields. Selecting a row opens its
 mutation-specific detail.
 
-![Exon 45 target map and mutations with frame-restoring candidates that contain exon 45](DMD_webapp/docs/screenshots/exon-skipping-target.png)
+![Exon 45 target map and mutations with frame-restoring candidates that contain exon 45](docs/screenshots/exon-skipping-target.png)
 
 #### Model by mutation
 
@@ -110,7 +110,7 @@ frame, candidate count, altered junction, additional exons and bases removed,
 and estimated protein length. Colored outlines distinguish the top three
 candidate combinations on the transcript schematic.
 
-![Ranked mutation-specific exon-skipping candidates and detailed calculation summary](DMD_webapp/docs/screenshots/exon-skipping-mutation.png)
+![Ranked mutation-specific exon-skipping candidates and detailed calculation summary](docs/screenshots/exon-skipping-mutation.png)
 
 ### Reference Map
 
@@ -127,7 +127,7 @@ shows the GRCh38 DMD locus and reverse-strand transcription direction, and
 aligns the gene span, introns, and coding exons. Plotly zoom, pan, reset, hover,
 and range-navigation controls support locus inspection.
 
-![Reference Map coordinate overview and GRCh38 genomic viewer](DMD_webapp/docs/screenshots/reference-map-overview.png)
+![Reference Map coordinate overview and GRCh38 genomic viewer](docs/screenshots/reference-map-overview.png)
 
 #### Genomic coding-exon reference
 
@@ -137,7 +137,7 @@ coordinates are not mixed with transcript positions or styling metadata. A CSV
 download preserves coordinate fields as numeric values, and the assembly
 warning guards against unconverted GRCh37/GRCh38 mixing.
 
-![Searchable GRCh38 coding-exon reference table and CSV download](DMD_webapp/docs/screenshots/reference-map-genomic-table.png)
+![Searchable GRCh38 coding-exon reference table and CSV download](docs/screenshots/reference-map-genomic-table.png)
 
 #### Transcript viewer and exon reference
 
@@ -148,7 +148,7 @@ omitted. The exon table keeps complete transcript positions, cumulative CDS
 offsets, UTR lengths, splice phases, encoded amino-acid ranges, and protein
 regions in explicitly labeled columns.
 
-![Spliced Dp427m transcript viewer, scale controls, and exon reference table](DMD_webapp/docs/screenshots/reference-map-transcript-viewer.png)
+![Spliced Dp427m transcript viewer, scale controls, and exon reference table](docs/screenshots/reference-map-transcript-viewer.png)
 
 #### Exon styling reference
 
@@ -157,7 +157,7 @@ viewer—one row per meaningful biological class rather than one row per exon.
 It separates colors, borders, opacity, labels, and biological meaning from the
 scientific coordinate tables.
 
-![Exon styling classes followed by the start of the protein reference section](DMD_webapp/docs/screenshots/reference-map-exon-styling.png)
+![Exon styling classes followed by the start of the protein reference section](docs/screenshots/reference-map-exon-styling.png)
 
 #### Protein viewers and feature table
 
@@ -169,7 +169,7 @@ amino-acid boundaries, encoded exons, colors, source coordinates, and notes.
 A visible warning retains the documented Leiden source-coordinate conflict
 instead of silently treating transcript-nucleotide positions as amino acids.
 
-![Detailed Dp427m protein feature tracks and protein-domain table](DMD_webapp/docs/screenshots/reference-map-protein-viewers.png)
+![Detailed Dp427m protein feature tracks and protein-domain table](docs/screenshots/reference-map-protein-viewers.png)
 
 #### Protein styling summary and provenance
 
@@ -178,7 +178,7 @@ cysteine-rich and carboxy-terminal regions, and untranslated sequence. The
 provenance table then records accessions, assembly, source organization, local
 module, access date, and transformation notes for each data element.
 
-![Protein styling atlas and structured data-provenance table](DMD_webapp/docs/screenshots/reference-map-protein-styling.png)
+![Protein styling atlas and structured data-provenance table](docs/screenshots/reference-map-protein-styling.png)
 
 #### Coordinate safeguards and external resources
 
@@ -187,7 +187,7 @@ DMD, genome-browser, NCBI, protein, and aggregate resources into expandable
 collections. BLAST is labeled as a sequence-comparison resource—not an
 exon-coordinate source—and GeneCards is identified as an aggregate portal.
 
-![Coordinate safeguards and grouped external DMD and sequence resources](DMD_webapp/docs/screenshots/reference-map-provenance-resources.png)
+![Coordinate safeguards and grouped external DMD and sequence resources](docs/screenshots/reference-map-provenance-resources.png)
 
 ### Methods and Limitations
 
@@ -199,14 +199,14 @@ The first half identifies the exact reference assembly and accessions, lists
 supported deletion, duplication, HGVS, genomic, and direct-exon inputs, and
 explains how coding lengths and splice phases are used in reading-frame calls.
 
-![Methods page reference system, supported inputs, and reading-frame calculation](DMD_webapp/docs/screenshots/methods-calculations.png)
+![Methods page reference system, supported inputs, and reading-frame calculation](docs/screenshots/methods-calculations.png)
 
 The second half explains exon-skipping search order and ranking, explicitly
 states that frame restoration is not evidence of therapeutic feasibility,
 lists model and annotation limitations, identifies the Ensembl and UniProt
 sources, and links to the project's AI-use statement.
 
-![Exon-skipping method, known limitations, data provenance, and AI-use statement](DMD_webapp/docs/screenshots/methods-limitations-provenance.png)
+![Exon-skipping method, known limitations, data provenance, and AI-use statement](docs/screenshots/methods-limitations-provenance.png)
 
 ## Repository layout
 

@@ -1,0 +1,6 @@
+example_id,input_text,input_mode,description,notes
+E001,del45-50,exon_deletion,Multi-exon deletion exons 45-50,Common frame-analysis demo case
+E002,dup2,exon_duplication,Single-exon duplication exon 2,Duplication frame test
+E003,c.5287C>T,hgvs_coding,SNV in coding region,HGVS parser test (Phase 3)
+E004,X:31140000-31150000,genomic,GRCh38 chrX interval,Coordinate mapper test (Phase 3)
+E005,del45,exon_deletion,Single-exon deletion exon 45,Single-exon deletion test

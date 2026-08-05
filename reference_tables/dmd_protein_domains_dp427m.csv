@@ -1,0 +1,49 @@
+region_name,feature,first_amino_acid,last_amino_acid,short_code,border_color,fill_color,source,source_version,date_accessed
+Codon Start,1,1,1,,,,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+5'UTR,1..244,1,244,5'UTR,,,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+dp427m,245..11299,245,11299,dp427m,,,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+CDS,245..11302,245,11302,CDS,,,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+dystrophin Dp427m unique N-terminus,245..277,245,277,Dp427m Exon1,,,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+Actin binding domain,278..964,278,964,ABD,#EB6F6F,#FFCCCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+central rod domain,1001..9364,1001,9364,Rod Domain,,,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+hinge region 1,1001..1225,1001,1225,H1,#4BAF89,#AEDCCA,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+repeat region 1,1253..1585,1253,1585,R1,#F0C266,#FFFFCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+repeat region 2,1586..1912,1586,1912,R2,#F0C266,#FFFFCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+repeat region 3,1913..2245,1913,2245,R3,#F0C266,#FFFFCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+hinge region 2,2246..2395,2246,2395,H2,#4BAF89,#AEDCCA,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+repeat region 4,2396..2728,2396,2728,R4,#F0C266,#FFFFCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+repeat region 5,2729..3046,2729,3046,R5,#F0C266,#FFFFCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+repeat region 6,3047..3379,3047,3379,R6,#F0C266,#FFFFCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+repeat region 7,3380..3706,3380,3706,R7,#F0C266,#FFFFCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+repeat region 8,3707..4033,3707,4033,R8,#F0C266,#FFFFCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+repeat region 9,4034..4345,4034,4345,R9,#F0C266,#FFFFCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+repeat region 10,4346..4633,4346,4633,R10,#F0C266,#FFFFCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+repeat region 11,4625..4948,4625,4948,R11,#F0C266,#FFFFCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+repeat region 12,4949..5272,4949,5272,R12,#F0C266,#FFFFCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+repeat region 13,5273..5578,5273,5578,R13,#F0C266,#FFFFCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+repeat region 14,5579..5866,5579,5866,R14,#F0C266,#FFFFCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+repeat region 15,5867..6163,5867,6163,R15,#F0C266,#FFFFCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+repeat region 16,6218..6547,6218,6547,R16,#F0C266,#FFFFCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+repeat region 17,6548..6868,6548,6868,R17,#F0C266,#FFFFCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+repeat region 18,6869..7198,6869,7198,R18,#F0C266,#FFFFCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+repeat region 19,7199..7513,7199,7513,R19,#F0C266,#FFFFCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+hinge region 3,7514..7654,7514,7654,H3,#4BAF89,#AEDCCA,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+repeat region 20,7655..7975,7655,7975,R20,#F0C266,#FFFFCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+repeat region 21,7976..8302,7976,8302,R21,#F0C266,#FFFFCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+repeat region 22,8303..8650,8303,8650,R22,#F0C266,#FFFFCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+repeat region 23,8651..9037,8651,9037,R23,#F0C266,#FFFFCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+repeat region 24,9038..9364,9038,9364,R24,#F0C266,#FFFFCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+hinge region 4,9284..9580,9284,9580,H4,#4BAF89,#AEDCCA,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+WW-domain,9410..9520,9410,9520,WW,#F0C266,#FFFFCC,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+dystroglycan binding site,9482..10468,9482,10468,,,,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+Cysteine-rich domain,9542..10144,9542,10144,CR Domain,#4D93D9,#4D93D9,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+EF-hand 1,9632..9715,9632,9715,EF1,,,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+EF-hand 2,9776..9862,9776,9862,EF2,,,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+Carboxy-terminal region,10142..11299,10142,11299,C-Term,#D86DCD,#F0E3F4,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+ZZ-domain,10163..10306,10163,10306,ZZ,,,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+alpha1-syntrophin binding site,10574..10726,10574,10726,,,,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+beta1-syntrophin binding site,10727..10849,10727,10849,,,,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+(Leu)6-heptad repeat,10916..11023,10916,11023,,,,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+3'UTR,11303..13993,11303,13993,3'UTR,,,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+polyA_signal,13971..13976,13971,13976,polyA,,,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28
+polyA_site,13993,13993,13993,polyAsite,,,Leiden DMD database (dmd.nl) Dp427m,Dp427m protein feature map,2026-07-28

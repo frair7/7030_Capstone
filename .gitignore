@@ -216,3 +216,17 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+archive/
+
+# Python-generated files
+__pycache__/
+*.py[cod]
+
+# Test cache
+.pytest_cache/
+
+# Matplotlib cache
+.mplconfig/
+
+# Generated previews and outputs
+DMD_webapp/outputs/
